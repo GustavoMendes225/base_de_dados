@@ -772,7 +772,7 @@ function renderConversionFunnelChart(kpis) {
 }
 
 
-// --- FUNÇÃO PRINCIPAL DE CARREGAMENTO E POPULAÇÃO ---
+// --- FUNÇÃO PRINCIPAL DE CARREGAMENTO E POPULAÇÃO (MODIFICADA) ---
 function loadDataAndPopulateDashboard() {
     const data = localStorage.getItem('vindeClientsData');
     
@@ -781,12 +781,15 @@ function loadDataAndPopulateDashboard() {
             clientsData = JSON.parse(data);
         } catch (e) {
             console.error("Erro ao ler dados do localStorage para o Dashboard:", e);
-            clientsData = DUMMY_DATA;
+            // Em caso de erro, usa array vazio.
+            clientsData = []; 
         }
     } else {
-        clientsData = DUMMY_DATA;
-        localStorage.setItem('vindeClientsData', JSON.stringify(DUMMY_DATA));
+        // Se não há dados no localStorage, inicializa com array vazio.
+        clientsData = [];
     }
+    
+    // A partir daqui, clientsData é garantidamente um array (vazio ou com dados).
     
     populateFilters(clientsData);
     applyFilters(); 
