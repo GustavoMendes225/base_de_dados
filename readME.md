@@ -14,5 +14,6 @@ Este projeto é um **Dashboard de Gestão de Clientes e Pipeline** desenvolvido 
 
 Como este é um projeto totalmente estático, ele não requer servidores backend.
 
-Instale o projeto aqui: [Projeto_base_de_dados_temporária..zip](https://github.com/user-attachments/files/22728030/Projeto_base_de_dados_temporaria.zip)
+
+
 
