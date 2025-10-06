@@ -1,1530 +1,1012 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base de Dados Vinde</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-    <style>
-        :root {
-            --azul-escuro: #182C4B;
-            --verde-claro: #00BFAE;
-            --cinza-claro: #F4F6F9;
-            --cinza-escuro: #4A4A4A;
-            --branco: #FFFFFF;
-            --vermelho: #E74C3C;
-            --amarelo: #F39C12;
-        }
-
-        /* Reset */
-        * {
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Animação do Loader */
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Loader */
-        #loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--branco);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 2000;
-        }
-
-        .loader-text {
-            margin-top: 15px;
-            font-weight: 500;
-            color: var(--azul-escuro);
-        }
-
-        .loader-icon {
-            width: 50px;
-            height: 50px;
-            transform-origin: 50% 50%;
-            animation: spin 1.2s linear infinite;
-        }
-
-        /* Navbar e Sidebar */
-        .navbar {
-            height: 60px;
-            background-color: var(--azul-escuro);
-            color: var(--branco);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar .btn-toggle {
-            background-color: var(--azul-escuro);
-            border: none;
-            padding: 8px 15px;
-            color: var(--branco);
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 24px;
-            transition: 0.3s;
-        }
-
-        .navbar .btn-sair {
-            background-color: var(--azul-escuro);
-            border: solid 1px;
-            padding: 8px 15px;
-            color: var(--branco);
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: 0.3s;
-        }
-
-        .navbar .btn-sair:hover,
-        .navbar .btn-toggle:hover {
-            opacity: 0.9;
-        }
-
-        .navbar .btn-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar {
-            width: 250px;
-            background-color: var(--cinza-claro);
-            padding: 20px;
-            position: fixed;
-            top: 60px;
-            left: 0;
-            height: calc(100% - 60px);
-            overflow-y: auto;
-            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
-            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 999;
-        }
-
-        .sidebar-section {
-            margin-bottom: 25px;
-        }
-
-        .sidebar-section h4 {
-            font-size: 13px;
-            text-transform: uppercase;
-            color: var(--cinza-escuro);
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-        }
-
-        .sidebar a {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: var(--azul-escuro);
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            font-weight: 500;
-            transition: all 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-            position: relative;
-        }
-
-        .sidebar a .icon {
-            margin-right: 10px;
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar a:hover {
-            background-color: var(--verde-claro);
-            color: var(--branco);
-            transform: translateX(8px);
-            box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15);
-        }
-
-        .sidebar a.active {
-            background-color: var(--azul-escuro);
-            color: var(--branco);
-            font-weight: 600;
-            border-left: 4px solid var(--verde-claro);
-            box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15);
-            transform: translateX(0);
-        }
-
-        .sidebar.closed {
-            left: -260px;
-        }
-
-        .main-container {
-            margin-left: 250px;
-            padding: 80px 20px 80px 20px;
-            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s, opacity 0.5s;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-
-        /* Tabela de Dados Otimizada */
-        .page-header {
-            margin-bottom: 25px;
-            border-left: 5px solid var(--verde-claro);
-            padding-left: 15px;
-        }
-
-        .page-header h1 {
-            font-size: 24px;
-            color: var(--azul-escuro);
-            margin-bottom: 5px;
-        }
-
-        .page-header p {
-            font-size: 14px;
-            color: var(--cinza-escuro);
-        }
-
-        .btn-action {
-            background-color: var(--azul-escuro);
-            color: var(--branco);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
-            white-space: nowrap;
-        }
-
-        .btn-action:hover {
-            background-color: #112239;
-        }
-
-        /* TOOLBAR */
-        .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
-            align-items: center;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-
-        .file-upload {
-            background-color: var(--verde-claro);
-            color: var(--branco);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-block;
-            font-size: 14px;
-            transition: 0.3s;
-            white-space: nowrap;
-        }
-
-        .file-upload:hover {
-            background-color: #009c8f;
-        }
-
-        .action-group,
-        .maintenance-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .filter-group {
-            display: flex;
-            flex: 1;
-            gap: 10px;
-            min-width: 300px;
-            transition: all 0.3s ease;
-        }
-
-        .filter-group.hidden {
-            display: none !important;
-        }
-
-        .toolbar input,
-        .toolbar select {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .toolbar input[disabled],
-        .toolbar select[disabled] {
-            background-color: #ddd;
-            cursor: not-allowed;
-        }
-
-        .filter-group #searchBox {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .filter-group #searchField {
-            flex: 0 0 160px;
-        }
-
-        .maintenance-group {
-            margin-left: auto;
-        }
-
-        /* FIM TOOLBAR */
-
-
-        .data-table-container {
-            overflow-x: auto;
-            background-color: var(--branco);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            max-height: calc(100vh - 300px);
-            overflow-y: auto;
-        }
-
-        .client-data-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1000px;
-        }
-
-        .client-data-table thead tr {
-            background-color: var(--azul-escuro);
-            color: var(--branco);
-            text-align: left;
-        }
-
-        .client-data-table th,
-        .client-data-table td {
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            font-size: 13px;
-            white-space: normal;
-            word-break: break-word;
-        }
-
-        .client-data-table th {
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            background-color: var(--azul-escuro);
-        }
-
-        .client-data-table tbody tr {
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
-        }
-
-        .client-data-table tbody tr:nth-of-type(even) {
-            background-color: var(--cinza-claro);
-        }
-
-        .client-data-table tbody tr:hover {
-            background-color: #e0f8f4;
-            cursor: default;
-        }
-
-        /* Congelamento das Colunas (Primeira e Última) */
-        .client-data-table th:first-child,
-        .client-data-table td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 6;
-            background-color: var(--branco);
-            font-weight: 600;
-            color: var(--azul-escuro);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            min-width: 150px;
-        }
-
-        .client-data-table th:first-child {
-            background-color: var(--azul-escuro);
-            color: var(--branco);
-        }
-
-        .client-data-table tbody tr:nth-of-type(even) td:first-child {
-            background-color: var(--cinza-claro);
-        }
-
-        .client-data-table tbody tr:hover td:first-child {
-            background-color: #e0f8f4;
-        }
-
-        .client-data-table th:last-child,
-        .client-data-table td:last-child {
-            position: sticky;
-            right: 0;
-            z-index: 6;
-            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-            width: 160px;
-            min-width: 160px;
-        }
-
-        .client-data-table td:last-child {
-            background-color: var(--branco);
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .client-data-table th:last-child {
-            background-color: var(--azul-escuro);
-            color: var(--branco);
-        }
-
-        .client-data-table tbody tr:nth-of-type(even) td:last-child {
-            background-color: var(--cinza-claro);
-        }
-
-        .client-data-table tbody tr:hover td:last-child {
-            background-color: #e0f8f4;
-        }
-
-        .client-data-table thead th:first-child,
-        .client-data-table thead th:last-child {
-            z-index: 7;
-        }
-
-        .client-data-table .monetary,
-        .client-data-table .percentage {
-            text-align: right;
-            font-weight: 500;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 3000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding-top: 60px;
-        }
-
-        .modal-content {
-            background-color: var(--branco);
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 8px;
-            width: 95%;
-            max-width: 800px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            transition: color 0.3s;
-        }
-
-        .close-btn:hover,
-        .close-btn:focus {
-            color: var(--azul-escuro);
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .modal-content h2 {
-            color: var(--azul-escuro);
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--verde-claro);
-            padding-bottom: 10px;
-        }
-
-        .modal-content h3 {
-            color: var(--cinza-escuro);
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .modal-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px 25px;
-        }
-
-        .modal-grid-address {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px 25px;
-        }
-
-        .modal-item strong {
-            display: block;
-            color: var(--verde-claro);
-            font-size: 12px;
-            margin-bottom: 2px;
-        }
-
-        .modal-item p {
-            color: var(--cinza-escuro);
-            font-size: 14px;
-            font-weight: 500;
-            word-break: break-all;
-        }
-
-        .modal-grid-address .modal-item-full {
-            grid-column: 1 / -1;
-        }
-
-        .status-badge {
-            font-weight: 600;
-            color: var(--azul-escuro);
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-
-        .status-sim {
-            background-color: var(--verde-claro);
-            color: var(--branco);
-        }
-
-        .status-nao {
-            background-color: var(--vermelho);
-            color: var(--branco);
-        }
-
-        .modal-input {
-            width: 100%;
-            padding: 6px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            display: none;
-        }
-
-        .validation-error {
-            color: var(--vermelho);
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        .btn-details {
-            background-color: var(--verde-claro);
-            color: var(--branco);
-            border: none;
-            padding: 6px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            transition: background-color 0.3s;
-            white-space: nowrap;
-        }
-
-        .btn-details:hover {
-            background-color: #008f87;
-        }
-
-        .btn-edit {
-            background-color: var(--amarelo) !important;
-            margin-left: 5px;
-        }
-
-        .btn-delete {
-            background-color: var(--vermelho) !important;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base de Dados | Vinde Investimentos</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+    :root {
+      --azul-escuro: #182C4B;
+      --verde-claro: #00BFAE;
+      --cinza-claro: #F4F6F9;
+      --cinza-escuro: #4A4A4A;
+      --branco: #FFFFFF;
+      --vermelho: #E74C3C;
+      --amarelo: #F39C12;
+    }
+
+    /* Reset */
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+
+    /* Animação do Loader */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Loader */
+    #loader {
+      position: fixed; top:0; left:0; width:100%; height:100%; background: var(--branco);
+      display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:2000;
+    }
+    .loader-text { margin-top:15px; font-weight:500; color: var(--azul-escuro); }
+    .loader-icon { 
+        width:50px; height:50px;
+        animation: spin 1.2s linear infinite; 
+    }
+
+    /* Navbar */
+    .navbar {
+      height:60px; background-color: var(--azul-escuro); color: var(--branco);
+      display:flex; justify-content:space-between; align-items:center; padding:0 20px;
+      position:fixed; width:100%; top:0; z-index:1000; box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    }
+    .navbar .btn-toggle {
+      background-color: var(--azul-escuro); border:none; padding:8px 15px; color: var(--branco);
+      border-radius:5px; cursor:pointer; font-size:24px; transition:0.3s;
+    }
+    .navbar .btn-sair {
+      background-color: var(--azul-escuro); border:solid 1px; padding:8px 15px; color: var(--branco);
+      border-radius:5px; cursor:pointer; font-size:12px; transition:0.3s;
+    }
+    .navbar .btn-sair:hover, .navbar .btn-toggle:hover { opacity:0.9; }
+    .navbar .btn-toggle { display:flex; align-items:center; justify-content:center; transition: transform 0.3s ease; }
+
+    /* Sidebar - CONFIGURAÇÕES REVISADAS */
+    .sidebar {
+      width: 250px;
+      position: fixed;
+      top: 60px; 
+      left: 0;
+      height: calc(100% - 60px); 
+      overflow-y: auto;
+      background-color: var(--cinza-claro);
+      padding: 20px;
+      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+      transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 999;
+    }
+
+    /* Estado Fechado */
+    .sidebar.closed {
+      left: -260px; 
+    }
+    
+    /* Conteúdo da Sidebar: Seções */
+    .sidebar-section {
+      margin-bottom: 25px;
+    }
+
+    .sidebar-section h4 {
+      font-size: 13px;
+      text-transform: uppercase;
+      color: var(--cinza-escuro);
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Estilo Padrão dos Links */
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: var(--azul-escuro);
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      font-weight: 500;
+      transition: all 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+      position: relative;
+    }
+
+    .sidebar a .icon { 
+      margin-right: 10px; 
+      transition: transform 0.3s ease; 
+    }
+
+    /* Efeito Hover */
+    .sidebar a:hover {
+      background-color: var(--verde-claro);
+      color: var(--branco);
+      transform: translateX(8px); 
+      box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Estilo do Link Ativo */
+    .sidebar a.active {
+      background-color: var(--azul-escuro);
+      color: var(--branco);
+      font-weight: 600;
+      border-left: 4px solid var(--verde-claro);
+      box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15); 
+      transform: translateX(0); 
+    }
+    /* FIM CONFIGURAÇÕES REVISADAS */
+
+    /* Container Principal */
+    .main-container {
+      margin-left:250px; padding:80px 20px 80px 20px; 
+      transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s, opacity 0.5s;
+      opacity:0; transform:translateY(20px);
+    }
+    .main-container.closed { margin-left:0; }
+    .footer {
+      position: fixed; bottom:0; width:100%; height:60px;
+      text-align:center; padding:20px 0; background-color: var(--cinza-claro); border-top:1px solid #ddd;
+    }
+
+    /* Tabela de Dados Otimizada */
+    .page-header { margin-bottom: 25px; border-left: 5px solid var(--verde-claro); padding-left: 15px; }
+    .page-header h1 { font-size: 24px; color: var(--azul-escuro); margin-bottom: 5px; }
+    .page-header p { font-size: 14px; color: var(--cinza-escuro); }
+    
+    /* File Upload/Add Client Button */
+    .btn-action {
+        background-color: var(--azul-escuro); color: var(--branco); border: none; 
+        padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;
+        transition: background-color 0.3s; white-space: nowrap;
+    }
+    .btn-action:hover {
+        background-color: #112239;
+    }
+
+    /* TOOLBAR */
+    .toolbar {
+        display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;
+        align-items: center; padding: 15px; border: 1px solid #eee; 
+        border-radius: 8px; background-color: #f9f9f9;
+    }
+    .file-upload{ 
+        background-color:var(--verde-claro); color:var(--branco); padding:8px 12px; border-radius:6px; 
+        cursor:pointer; display:inline-block; font-size:14px; transition:0.3s; white-space: nowrap;
+    }
+    .file-upload:hover{background-color:#009c8f;}
+    .action-group, .maintenance-group { display: flex; gap: 10px; }
+    .filter-group { display: flex; flex: 1; gap: 10px; min-width: 300px; transition: all 0.3s ease; }
+    .filter-group.hidden { display: none !important; }
+    .toolbar input, .toolbar select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    .toolbar input[disabled], .toolbar select[disabled] { background-color: #ddd; cursor: not-allowed; }
+    .filter-group #searchBox { flex: 1; min-width: 150px; }
+    .filter-group #searchField { flex: 0 0 160px; }
+    .maintenance-group { margin-left: auto; }
+    /* FIM TOOLBAR */
+
+
+    .data-table-container {
+        overflow-x: auto; background-color: var(--branco); padding: 20px;
+        border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        max-height: calc(100vh - 300px); overflow-y: auto;
+    }
+    .client-data-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+    .client-data-table thead tr { background-color: var(--azul-escuro); color: var(--branco); text-align: left; }
+    .client-data-table th, .client-data-table td { padding: 10px 12px; border: 1px solid #ddd; font-size: 13px; white-space: normal; word-break: break-word; }
+    .client-data-table th { position: sticky; top: 0; z-index: 5; background-color: var(--azul-escuro); }
+    .client-data-table tbody tr { border-bottom: 1px solid #eee; transition: background-color 0.2s; }
+    .client-data-table tbody tr:nth-of-type(even) { background-color: var(--cinza-claro); }
+    .client-data-table tbody tr:hover { background-color: #e0f8f4; cursor: default; }
+
+    /* Congelamento das Colunas (Primeira e Última) */
+    .client-data-table th:first-child, .client-data-table td:first-child { position: sticky; left: 0; z-index: 6; background-color: var(--branco); box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); min-width: 150px; }
+    .client-data-table th:first-child { background-color: var(--azul-escuro); color: var(--branco); }
+    .client-data-table tbody tr:nth-of-type(even) td:first-child { background-color: var(--cinza-claro); }
+    .client-data-table tbody tr:hover td:first-child { background-color: #e0f8f4; }
+    .client-data-table th:last-child, .client-data-table td:last-child { position: sticky; right: 0; z-index: 6; box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1); width: 160px; min-width: 160px; }
+    .client-data-table td:last-child { background-color: var(--branco); text-align: center; display: flex; align-items: center; justify-content: center; }
+    .client-data-table th:last-child { background-color: var(--azul-escuro); color: var(--branco); }
+    .client-data-table tbody tr:nth-of-type(even) td:last-child { background-color: var(--cinza-claro); }
+    .client-data-table tbody tr:hover td:last-child { background-color: #e0f8f4; }
+    .client-data-table thead th:first-child, .client-data-table thead th:last-child { z-index: 7; }
+
+    /* Botão de Ações */
+    .btn-details { background-color: var(--verde-claro); color: var(--branco); border: none; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; transition: background-color 0.3s; white-space: nowrap; }
+    .btn-details:hover { background-color: #008f87; }
+    .btn-details[style*="amarelo"] { background-color: var(--amarelo) !important; margin-left: 5px; }
+    
+    /* Estilo para valores monetários/porcentagem */
+    .client-data-table .monetary { text-align: right; font-weight: 500; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); padding-top: 60px; }
+    .modal-content { background-color: var(--branco); margin: 5% auto; padding: 30px; border-radius: 8px; width: 95%; max-width: 800px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
+    .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; transition: color 0.3s; }
+    .close-btn:hover, .close-btn:focus { color: var(--azul-escuro); text-decoration: none; cursor: pointer; }
+    .modal-content h2 { color: var(--azul-escuro); margin-bottom: 20px; border-bottom: 2px solid var(--verde-claro); padding-bottom: 10px; }
+    .modal-content h3 { color: var(--cinza-escuro); margin-top: 20px; margin-bottom: 10px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .modal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px 25px; }
+    .modal-grid-address { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px 25px; }
+    .modal-item strong { display: block; color: var(--verde-claro); font-size: 12px; margin-bottom: 2px; }
+    .modal-item p { color: var(--cinza-escuro); font-size: 14px; font-weight: 500; word-break: break-all; }
+    .modal-grid-address .modal-item-full { grid-column: 1 / -1; }
+    .status-badge { font-weight: 600; color: var(--azul-escuro); padding: 2px 5px; border-radius: 3px; }
+    .status-sim { background-color: var(--verde-claro); color: var(--branco); }
+    .status-nao { background-color: var(--vermelho); color: var(--branco); }
+
+    /* Campos de Input e Select no Modal */
+    .modal-input{width:100%; padding:6px; border-radius:4px; border:1px solid #ccc; display:none;}
+    .validation-error { color: var(--vermelho); font-weight: 600; margin-top: 10px; }
+    
+</style>
 </head>
 
 <body>
-    <div id="loader">
-        <svg class="loader-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
-            <path d="M25 0 A25 25 0 1 1 24.99 0" stroke="var(--verde-claro)" stroke-width="5" fill="none" />
-        </svg>
-        <div class="loader-text">Carregando Base de Dados...</div>
+<div id="loader">
+  <svg class="loader-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+    <path d="M25 0 A25 25 0 1 1 24.99 0" stroke="var(--verde-claro)" stroke-width="5" fill="none"/>
+  </svg>
+  <div class="loader-text">Carregando Base de Dados...</div>
+</div>
+
+<div class="navbar">
+  <button class="btn-toggle" onclick="toggleSidebar()">☰</button>
+  Vinde Investimentos
+  <button class="btn-sair" onclick="window.location.href='login.html'">Sair</button>
+</div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <h4>Operações</h4>
+    <a href="index.html"><span class="icon">></span> Dashboard Principal</a>
+    <a href="#" class="active"><span class="icon">></span> Base de Dados</a>
+  </div>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="page-header">
+        <h1>Base de Dados de Clientes</h1>
+        <p>Gerencie e visualize todos os dados operacionais e cadastrais dos clientes Vinde. (0 Clientes Exibidos)</p>
     </div>
 
-    <div class="navbar">
-        <button class="btn-toggle" onclick="toggleSidebar()">☰</button>
-        Vinde Investimentos
-        <button class="btn-sair" onclick="window.location.href='login.html'">Sair</button>
-    </div>
+    <div class="toolbar">
+        <div class="action-group">
+            <label class="file-upload">Carregar Planilha Excel
+                <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none;">
+            </label>
+            <button class="file-upload" onclick="addNewClient()"> Adicionar Cliente</button>
+        </div>
 
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-section">
-            <h4>Operações</h4>
-            <a href="index.html"><span class="icon">></span> Dashboard Principal</a>
-            <a href="#" class="active"><span class="icon">></span> Base de Dados</a>
+        <div class="filter-group hidden" id="filterGroup">
+            <select id="searchField" onchange="filterClients()">
+                <option value="">Buscar em Todos os Campos</option>
+            </select>
+
+            <input type="text" list="search-options" id="searchBox" placeholder="Pesquisa instantânea..." onkeyup="filterClients()">
+            <datalist id="search-options"></datalist>
+            
+            <button class="btn-action" onclick="clearFilters()" style="background-color: var(--verde-claro);"> Limpar</button>
+        </div>
+
+        <div class="maintenance-group">
+            <button class="btn-action" onclick="exportClientsToExcel()" style="background-color: var(--verde-claro);"> Exportar Tabela</button>
+            <button class="btn-action" onclick="resetClients()" style="background-color: var(--azul-escuro);"> Reiniciar Tabela</button>
         </div>
     </div>
-
-    <div class="main-container" id="mainContainer">
-        <div class="page-header">
-            <h1>Base de Dados de Clientes</h1>
-            <p>Gerencie e visualize todos os dados operacionais e cadastrais dos clientes Vinde. (0 Clientes Exibidos)
-            </p>
-        </div>
-
-        <div class="toolbar">
-            <div class="action-group">
-                <label class="file-upload">Carregar Planilha Excel
-                    <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none;">
-                </label>
-                <button class="file-upload" onclick="addNewClient()"> Adicionar Cliente</button>
-            </div>
-
-            <div class="filter-group hidden" id="filterGroup">
-                <select id="searchField" onchange="filterClients()">
-                    <option value="">Buscar em Todos os Campos</option>
-                </select>
-
-                <input type="text" list="search-options" id="searchBox" placeholder="Pesquisa instantânea..."
-                    onkeyup="filterClients()">
-                <datalist id="search-options"></datalist>
-
-                <button class="btn-action" onclick="clearFilters()" style="background-color: var(--verde-claro);">
-                    Limpar</button>
-            </div>
-
-            <div class="maintenance-group">
-                <button class="btn-action" onclick="exportClientsToExcel()"
-                    style="background-color: var(--verde-claro);"> Exportar Tabela</button>
-                <button class="btn-action" onclick="resetClients()" style="background-color: var(--azul-escuro);">
-                    Reiniciar Tabela</button>
-            </div>
-        </div>
-        <div class="data-table-container">
-            <table class="client-data-table" id="clientDataTable">
-                <thead>
-                </thead>
-                <tbody>
+    <div class="data-table-container">
+        <table class="client-data-table" id="clientDataTable">
+            <thead>
+                <tr>
+                    <th>Nome do Cliente</th> 
+                    <th>Título</th>
+                    <th>CPF</th>
+                    <th>Corretora</th>
+                    <th>Cód. Conta</th>
+                    <th>Criado</th>
+                    <th>Assinou?</th>
+                    <th>Subiu Corretora?</th>
+                    <th>FEE</th>
+                    <th>AUM</th>
+                    <th>Ações</th> 
+                </tr>
+            </thead>
+            <tbody>
                 </tbody>
-            </table>
+        </table>
+    </div>
+</div>
+
+<div class="footer">© 2025 Vinde Investimentos</div>
+
+<div id="clientModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>Detalhes Completos: 
+            <span id="modalNome_do_cliente"></span>
+            <input id="inputNome_do_cliente" class="modal-input" style="font-size: 24px; font-weight: 600; width: 80%; display: none; border-bottom: 2px solid var(--verde-claro);">
+        </h2>
+        
+        <h3>Dados Operacionais e Contrato</h3>
+        <div class="modal-grid">
+            <div class="modal-item"><strong>Título:</strong> <p id="modalTitulo"></p><input id="inputTitulo" class="modal-input"></div>
+            <div class="modal-item"><strong>Criado:</strong> <p id="modalCriado"></p><input type="date" id="inputCriado" class="modal-input"></div>
+            <div class="modal-item"><strong>Consultor:</strong> <p id="modalConsultor"></p><input id="inputConsultor" class="modal-input"></div>
+            <div class="modal-item"><strong>Corretora:</strong> <p id="modalCorretora"></p>
+                <input list="corretoras-list" id="inputCorretora" class="modal-input">
+                <datalist id="corretoras-list"></datalist>
+            </div>
+            <div class="modal-item"><strong>Código da Conta:</strong> <p id="modalCodigo_da_conta"></p><input id="inputCodigo_da_conta" class="modal-input"></div>
+            <div class="modal-item"><strong>FEE (Taxa):</strong> <p id="modalFEE"></p><input type="text" id="inputFEE" class="modal-input"></div>
+            <div class="modal-item"><strong>AUM:</strong> <p id="modalAUM"></p><input type="number" step="0.01" id="inputAUM" class="modal-input"></div>
+            <div class="modal-item"><strong>Carteira Vinde:</strong> <p id="modalCarteira_Vinde"></p>
+                <input list="carteira-list" id="inputCarteira_Vinde" class="modal-input">
+                <datalist id="carteira-list"></datalist>
+            </div>
+            <div class="modal-item"><strong>Caminho:</strong> <p id="modalCaminho"></p><input id="inputCaminho" class="modal-input"></div>
+            <div class="modal-item"><strong>Assinou Contrato?:</strong> <p id="modalAssinou_Contrato"></p><select id="inputAssinou_Contrato" class="modal-input"><option>Sim</option><option>Não</option></select></div>
+            <div class="modal-item"><strong>Subiu Corretora?:</strong> <p id="modalSubiu_Cliente_Corretora"></p><select id="inputSubiu_Cliente_Corretora" class="modal-input"><option>Sim</option><option>Não</option></select></div>
+            <div class="modal-item"><strong>Subiu Cobrança?:</strong> <p id="modalSubiu_Base_de_Cobranca"></p><select id="inputSubiu_Base_de_Cobranca" class="modal-input"><option>Sim</option><option>Não</option></select></div>
+        </div>
+        
+        <h3>Dados Cadastrais</h3>
+        <div class="modal-grid">
+            <div class="modal-item"><strong>CPF:</strong> <p id="modalCPF"></p><input id="inputCPF" class="modal-input"></div>
+            <div class="modal-item"><strong>E-mail:</strong> <p id="modalE_mail"></p><input id="inputE_mail" class="modal-input"></div>
+            <div class="modal-item"><strong>Nacionalidade:</strong> <p id="modalNacionalidade"></p><input id="inputNacionalidade" class="modal-input"></div>
+            <div class="modal-item"><strong>Estado Civil:</strong> <p id="modalEstado_civil"></p><input id="inputEstado_civil" class="modal-input"></div>
+            <div class="modal-item"><strong>Profissão:</strong> <p id="modalProfissao"></p><input id="inputProfissao" class="modal-input"></div>
+        </div>
+
+        <h3>Endereço Completo</h3>
+        <div class="modal-grid-address">
+            <div class="modal-item"><strong>Endereço:</strong> <p id="modalEndereço"></p><input id="inputEndereço" class="modal-input"></div>
+            <div class="modal-item"><strong>Número:</strong> <p id="modalNúmero"></p><input id="inputNúmero" class="modal-input"></div>
+            <div class="modal-item"><strong>Complemento:</strong> <p id="modalComplemento"></p><input id="inputComplemento" class="modal-input"></div>
+            <div class="modal-item"><strong>Cidade:</strong> <p id="modalCidade"></p><input id="inputCidade" class="modal-input"></div>
+            <div class="modal-item"><strong>CEP:</strong> <p id="modalCEP"></p><input id="inputCEP" class="modal-input"></div>
+            <div class="modal-item"><strong>País:</strong> <p id="modalPaís"></p><input id="inputPaís" class="modal-input"></div>
+        </div>
+        
+        <div id="validationMessage" class="validation-error" style="display:none; text-align: left; margin-top: 20px;"></div>
+
+        <div style="margin-top:15px; text-align:right;">
+          <button id="btnEditMode" class="btn-details" style="background-color: var(--amarelo);" onclick="enterEditMode()">Editar</button>
+          <button id="btnSave" class="btn-details" onclick="saveEdits()" style="display:none; background-color: var(--verde-claro);">Salvar</button>
+          <button id="btnCancel" class="btn-details" onclick="cancelEdit()" style="display:none; background-color: var(--vermelho);">Cancelar</button>
         </div>
     </div>
+</div>
 
-    <div class="footer">© 2025 Vinde Investimentos</div>
+<script>
+    // ARRAY DE CLIENTES INICIALMENTE VAZIA
+    let clients = []; 
+    let currentClientIndex = null;
+    let isAddingNewClient = false; 
+    
+    // LISTA DE CAMPOS CHAVE (Usando nomes exatos do Excel, porém com espaços e caracteres removidos para ID/Input)
+    // O mapeamento interno (EXCEL_TO_ID) garante a correspondência.
+    const EXCEL_TO_ID_MAP = {
+        'Título': 'Titulo',
+        'Nome do cliente': 'Nome_do_cliente',
+        'Criado': 'Criado',
+        'Assinou Contrato?': 'Assinou_Contrato',
+        'Subiu Cliente Corretora?': 'Subiu_Cliente_Corretora',
+        'Subiu Base de Cobrança?': 'Subiu_Base_de_Cobranca',
+        'Nacionalidade': 'Nacionalidade',
+        'Estado civil': 'Estado_civil',
+        'Profissão': 'Profissao',
+        'CPF': 'CPF',
+        'E-mail': 'E_mail',
+        'Endereço': 'Endereço',
+        'Número': 'Número',
+        'Cidade': 'Cidade',
+        'CEP': 'CEP',
+        'País': 'País',
+        'Complemento': 'Complemento',
+        'FEE': 'FEE', // Chave que precisamos formatar
+        'Corretora': 'Corretora',
+        'Código da conta': 'Codigo_da_conta',
+        'AUM': 'AUM',
+        'Carteira Vinde': 'Carteira_Vinde',
+        'Caminho': 'Caminho',
+        'Consultor': 'Consultor' 
+    };
 
-    <div id="clientModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2>Detalhes Completos:
-                <span id="modalClientName"></span>
-                <input id="inputCliente" class="modal-input"
-                    style="font-size: 24px; font-weight: 600; width: 80%; display: none; border-bottom: 2px solid var(--verde-claro);">
-            </h2>
+    const ID_TO_EXCEL_MAP = Object.entries(EXCEL_TO_ID_MAP).reduce((acc, [key, value]) => {
+        acc[value] = key;
+        return acc;
+    }, {});
 
-            <h3>Dados Operacionais e Contrato</h3>
-            <div class="modal-grid">
-                <div class="modal-item"><strong>Título:</strong>
-                    <p id="modalTitulo"></p><input id="inputTitulo" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Criado em:</strong>
-                    <p id="modalCriado"></p><input id="inputCriado" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Assinou Contrato?:</strong>
-                    <p id="modalAssinouContrato"></p><select id="inputAssinouContrato" class="modal-input">
-                        <option>Sim</option>
-                        <option>Não</option>
-                    </select>
-                </div>
-                <div class="modal-item"><strong>Subiu Cobrança?:</strong>
-                    <p id="modalSubiuCobranca"></p><select id="inputSubiuCobranca" class="modal-input">
-                        <option>Sim</option>
-                        <option>Não</option>
-                    </select>
-                </div>
-                <div class="modal-item"><strong>Fee (Taxa):</strong>
-                    <p id="modalFee"></p><input type="number" step="0.0001" id="inputFee" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Corretora:</strong>
-                    <p id="modalCorretora"></p>
-                    <input list="corretoras-list" id="inputCorretora" class="modal-input">
-                    <datalist id="corretoras-list"></datalist>
-                </div>
-                <div class="modal-item"><strong>Código de Conta:</strong>
-                    <p id="modalCodigoConta"></p><input id="inputCodigoConta" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>AUM (Custódia):</strong>
-                    <p id="modalAUM"></p><input type="number" step="0.01" id="inputAUM" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Carteira Vinde:</strong>
-                    <p id="modalCarteiraVinde"></p>
-                    <input list="carteira-list" id="inputCarteiraVinde" class="modal-input">
-                    <datalist id="carteira-list"></datalist>
-                </div>
-                <div class="modal-item"><strong>Consultor:</strong>
-                    <p id="modalConsultor"></p>
-                    <input list="consultores-list" id="inputConsultor" class="modal-input">
-                    <datalist id="consultores-list"></datalist>
-                </div>
-                <div class="modal-item"><strong>Data Contrato:</strong>
-                    <p id="modalDataContrato"></p><input type="date" id="inputDataContrato" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Subiu Corretora?:</strong>
-                    <p id="modalSubiuCorretora"></p><select id="inputSubiuCorretora" class="modal-input">
-                        <option>Sim</option>
-                        <option>Não</option>
-                    </select>
-                </div>
-                <div class="modal-item"><strong>AUM (Fora Parceiras):</strong>
-                    <p id="modalAUMFora"></p><input type="number" step="0.01" id="inputAUMFora" class="modal-input">
-                </div>
-            </div>
+    const fieldsToUpdate = Object.values(EXCEL_TO_ID_MAP); // Lista de IDs Limpos
+    
+    // Lista dinâmica de cabeçalhos da planilha (atualizada ao carregar o arquivo)
+    let dynamicColumnHeaders = []; 
 
-            <h3>Dados Cadastrais</h3>
-            <div class="modal-grid">
-                <div class="modal-item"><strong>CPF:</strong>
-                    <p id="modalCPF"></p><input id="inputCPF" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>E-mail Cliente:</strong>
-                    <p id="modalEmail"></p><input id="inputEmail" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Nacionalidade:</strong>
-                    <p id="modalNacionalidade"></p><input id="inputNacionalidade" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Estado Civil:</strong>
-                    <p id="modalEstadoCivil"></p><input id="inputEstadoCivil" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Profissão:</strong>
-                    <p id="modalProfissao"></p><input id="inputProfissao" class="modal-input">
-                </div>
-            </div>
+    // Variáveis de Datalist
+    let uniqueCorretoras = [];
+    let uniqueCarteiraVinde = [];
 
-            <h3>Endereço Completo</h3>
-            <div class="modal-grid-address">
-                <div class="modal-item-full"><strong>Endereço:</strong>
-                    <p id="modalEndereco"></p><input id="inputEndereco" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Número:</strong>
-                    <p id="modalNumero"></p><input id="inputNumero" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Complemento:</strong>
-                    <p id="modalComplemento"></p><input id="inputComplemento" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>Cidade:</strong>
-                    <p id="modalCidade"></p><input id="inputCidade" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>CEP:</strong>
-                    <p id="modalCEP"></p><input id="inputCEP" class="modal-input">
-                </div>
-                <div class="modal-item"><strong>País:</strong>
-                    <p id="modalPais"></p><input id="inputPais" class="modal-input">
-                </div>
-            </div>
+    // --- FUNÇÕES DE PERSISTÊNCIA (localStorage) ---
+    function saveClientsToStorage() {
+        if (clients.length > 0) {
+            localStorage.setItem('vindeClientsData', JSON.stringify(clients));
+        } else {
+            localStorage.removeItem('vindeClientsData');
+        }
+    }
 
-            <div id="validationMessage" class="validation-error"
-                style="display:none; text-align: left; margin-top: 20px;"></div>
+    function loadClientsFromStorage() {
+        const data = localStorage.getItem('vindeClientsData');
+        if (data) {
+            try {
+                clients = JSON.parse(data);
+                
+                if (clients.length > 0) {
+                    // Usa as chaves do primeiro objeto JSON (que são os headers exatos do Excel)
+                    dynamicColumnHeaders = Object.keys(clients[0]); 
+                    populateSearchFieldDropdown(dynamicColumnHeaders); 
+                    extractAndPopulateDatalists(clients); 
+                }
+            } catch (e) {
+                console.error("Erro ao carregar dados do localStorage:", e);
+                clients = [];
+            }
+        }
+        populateTable();
+    }
+    
+    // --- Funções de Formatação ---
+    const formatCurrency = (value) => {
+        const numberValue = typeof value === 'number' ? value : (parseFloat(value) || 0);
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(numberValue);
+    };
 
-            <div style="margin-top:15px; text-align:right;">
-                <button id="btnEditMode" class="btn-details btn-edit" onclick="enterEditMode()">Editar</button>
-                <button id="btnSave" class="btn-details" onclick="saveEdits()" style="display:none;">Salvar</button>
-                <button id="btnCancel" class="btn-details btn-delete" onclick="cancelEdit()"
-                    style="display:none;">Cancelar</button>
-            </div>
-        </div>
-    </div>
+    const getStatusBadge = (status) => {
+        const statusText = String(status).toLowerCase().includes('sim') ? 'Sim' : 'Não';
+        const className = statusText.toLowerCase() === 'sim' ? 'status-sim' : 'status-nao';
+        return `<span class="status-badge ${className}">${statusText}</span>`;
+    }
+    
+    // --- FUNÇÃO CENTRAL PARA POPULAR FILTROS E DATALISTS ---
+    function extractAndPopulateDatalists(data) {
+        const corretorasSet = new Set();
+        const carteiraSet = new Set();
+        
+        // Usa os nomes exatos do Excel para garantir que as chaves sejam encontradas
+        const CORRETORA_KEY = ID_TO_EXCEL_MAP.Corretora;
+        const CARTEIRA_KEY = ID_TO_EXCEL_MAP.Carteira_Vinde;
 
-    <script>
-        let clients = [];
-        let currentClientIndex = null;
-        let isAddingNewClient = false;
+        data.forEach(client => {
+            const corretora = String(client[CORRETORA_KEY] || '').trim();
+            const carteiraVinde = String(client[CARTEIRA_KEY] || '').trim();
 
-        // Lista de campos PRINCIPAIS (21 + auxiliares)
-        // O campo 'EmailConsultor' foi REMOVIDO conforme solicitado.
-        const fieldsToUpdate = [
-            'Titulo', 'Cliente', 'Criado', 'AssinouContrato', 'SubiuCobranca',
-            'Nacionalidade', 'EstadoCivil', 'Profissao', 'CPF', 'Email',
-            'Endereco', 'Numero', 'Cidade', 'CEP', 'Pais', 'Complemento',
-            'Fee', 'Corretora', 'CodigoConta', 'AUM', 'CarteiraVinde',
-            // Campos auxiliares mantidos:
-            'Consultor', 'DataContrato', 'SubiuCorretora', 'AUMFora'
+            if (corretora) corretorasSet.add(corretora);
+            if (carteiraVinde) carteiraSet.add(carteiraVinde);
+        });
+
+        uniqueCorretoras = Array.from(corretorasSet).sort();
+        uniqueCarteiraVinde = Array.from(carteiraSet).sort();
+
+        // Popula Datalists do MODAL
+        populateDatalist('corretoras-list', uniqueCorretoras);
+        populateDatalist('carteira-list', uniqueCarteiraVinde);
+    }
+    
+    function populateDatalist(id, optionsArray) {
+        const datalistElement = document.getElementById(id);
+        if (!datalistElement) return;
+
+        datalistElement.innerHTML = ''; 
+        
+        optionsArray.forEach(option => {
+            if (option) {
+                const opt = document.createElement('option');
+                opt.value = option;
+                datalistElement.appendChild(opt);
+            }
+        });
+    }
+    
+    function populateSearchFieldDropdown(headers) {
+        const select = document.getElementById('searchField');
+        select.innerHTML = '<option value="">Buscar em Todos os Campos</option>';
+        
+        dynamicColumnHeaders = headers || [];
+        
+        dynamicColumnHeaders.forEach(header => {
+            if (header && typeof header === 'string') {
+                const option = document.createElement('option');
+                option.value = header;
+                option.textContent = header;
+                select.appendChild(option);
+            }
+        });
+        
+        toggleFilterState(headers.length > 0);
+    }
+    
+    function toggleFilterState(isEnabled) {
+        const searchBox = document.getElementById('searchBox');
+        const searchField = document.getElementById('searchField');
+        const filterGroup = document.getElementById('filterGroup');
+        
+        if (isEnabled) {
+            filterGroup.classList.remove('hidden');
+        } else {
+            filterGroup.classList.add('hidden');
+        }
+        
+        searchBox.disabled = !isEnabled;
+        searchField.disabled = !isEnabled;
+    }
+
+
+    // --- Funções de Filtro (Lógica Unificada) ---
+    function filterClients() {
+        if (clients.length === 0) {
+            populateTable(clients);
+            return;
+        }
+        
+        const searchField = document.getElementById('searchField').value.trim();
+        const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+        const searchOptionsDatalist = document.getElementById('search-options');
+        searchOptionsDatalist.innerHTML = '';
+        
+        // Referencia as chaves do Excel
+        const CORRETORA_KEY = ID_TO_EXCEL_MAP.Corretora;
+        const CARTEIRA_KEY = ID_TO_EXCEL_MAP.Carteira_Vinde;
+
+        if (searchField === CORRETORA_KEY) {
+            populateDatalist('search-options', uniqueCorretoras);
+        } else if (searchField === CARTEIRA_KEY) {
+            populateDatalist('search-options', uniqueCarteiraVinde);
+        } else if (searchField.toLowerCase().includes('assinou') || searchField.toLowerCase().includes('subiu')) {
+             populateDatalist('search-options', ['Sim', 'Não']);
+        }
+        
+        const filteredClients = clients.filter(client => {
+            
+            if (!searchTerm) {
+                return true; 
+            }
+
+            if (searchField !== "" && client.hasOwnProperty(searchField)) {
+                const clientValue = String(client[searchField] || '').toLowerCase();
+                return clientValue.includes(searchTerm);
+            }
+            
+            const valuesToSearch = dynamicColumnHeaders
+                .map(header => String(client[header] || ''))
+                .map(val => val.toLowerCase());
+            
+            return valuesToSearch.some(val => val.includes(searchTerm));
+        });
+
+        populateTable(filteredClients);
+    }
+    
+    function clearFilters() {
+        document.getElementById('searchField').value = '';
+        document.getElementById('searchBox').value = '';
+        document.getElementById('search-options').innerHTML = ''; 
+        filterClients();
+    }
+
+
+    // --- Função para preencher a tabela ---
+    function populateTable(data = clients) {
+        const tableBody = document.querySelector('#clientDataTable tbody');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = ''; 
+        
+        document.querySelector('.page-header p').textContent = `Gerencie e visualize todos os dados operacionais e cadastrais dos clientes Vinde. (${data.length} Clientes Exibidos)`;
+        
+        // CHAVES EXATAS DO EXCEL para as colunas exibidas na tabela principal
+        const displayedColumnsKeys = [
+            ID_TO_EXCEL_MAP.Nome_do_cliente, 
+            ID_TO_EXCEL_MAP.Titulo, 
+            ID_TO_EXCEL_MAP.CPF, 
+            ID_TO_EXCEL_MAP.Corretora, 
+            ID_TO_EXCEL_MAP.Codigo_da_conta, 
+            ID_TO_EXCEL_MAP.Criado, 
+            ID_TO_EXCEL_MAP.Assinou_Contrato, 
+            ID_TO_EXCEL_MAP.Subiu_Cliente_Corretora, 
+            ID_TO_EXCEL_MAP.FEE, // Chave do FEE
+            ID_TO_EXCEL_MAP.AUM
         ];
 
-        let dynamicColumnHeaders = [];
-
-        let uniqueCorretoras = [];
-        let uniqueCarteiraVinde = [];
-        let uniqueConsultores = [];
-
-        // --- MAPA DE TRADUÇÃO DE CHAVES DA PLANILHA ---
-        const EXCEL_HEADER_MAP = {
-            "titulo": "Titulo",
-            "nome do cliente": "Cliente",
-            "cliente": "Cliente",
-            "criado": "Criado",
-            "assinou contrato": "AssinouContrato",
-            "subiu base de cobrança": "SubiuCobranca",
-            "nacionalidade": "Nacionalidade",
-            "estado civil": "EstadoCivil",
-            "profissão": "Profissao",
-            "cpf": "CPF",
-            "e-mail": "Email",
-            "email": "Email",
-            // 'email consultor' REMOVIDO AQUI
-            "endereço": "Endereco",
-            "número": "Numero",
-            "cidade": "Cidade",
-            "cep": "CEP",
-            "país": "Pais",
-            "complemento": "Complemento",
-            "fee": "Fee",
-            "corretora": "Corretora",
-            "código de conta": "CodigoConta",
-            "aum": "AUM",
-            "aum (custódia)": "AUM",
-            "carteira vinde": "CarteiraVinde",
-            // Mapeamentos auxiliares:
-            "consultor": "Consultor",
-            "data contrato": "DataContrato",
-            "subiu corretora?": "SubiuCorretora",
-            "subiu corretora": "SubiuCorretora",
-            "aum (fora parceiras)": "AUMFora"
-        };
-
-        // --- FUNÇÕES DE PERSISTÊNCIA (localStorage) ---
-        function saveClientsToStorage() {
-            if (clients.length > 0) {
-                localStorage.setItem('vindeClientsData', JSON.stringify(clients));
-            } else {
-                localStorage.removeItem('vindeClientsData');
-            }
-        }
-
-        function loadClientsFromStorage() {
-            const data = localStorage.getItem('vindeClientsData');
-            if (data) {
-                try {
-                    clients = JSON.parse(data);
-
-                    if (clients.length > 0) {
-                        // Garante que o dynamicColumnHeaders tenha todos os campos salvos
-                        dynamicColumnHeaders = Object.keys(clients[0]);
-                        populateSearchFieldDropdown(dynamicColumnHeaders);
-                        extractAndPopulateDatalists(clients);
-                    }
-                } catch (e) {
-                    console.error("Erro ao carregar dados do localStorage:", e);
-                    clients = [];
-                }
-            }
-            populateTable();
-        }
-
-        // --- Funções de Formatação ---
-        const formatCurrency = (value) => {
-            const numberValue = typeof value === 'number' ? value : (parseFloat(value) || 0);
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(numberValue);
-        };
-
-        const formatPercentage = (value) => {
-            const numberValue = typeof value === 'number' ? value : (parseFloat(value) || 0);
-            return `${(numberValue * 100).toFixed(2)}%`;
-        };
-
-        const getStatusBadge = (status) => {
-            const statusText = String(status).toLowerCase().includes('sim') ? 'Sim' : 'Não';
-            const className = statusText.toLowerCase() === 'sim' ? 'status-sim' : 'status-nao';
-            return `<span class="status-badge ${className}">${statusText}</span>`;
-        }
-
-        // --- FUNÇÃO CENTRAL PARA POPULAR FILTROS E DATALISTS ---
-        function extractAndPopulateDatalists(data) {
-            const corretorasSet = new Set();
-            const carteiraSet = new Set();
-            const consultorSet = new Set();
-
-            data.forEach(client => {
-                const consultor = String(client.Consultor || '').trim();
-                const corretora = String(client.Corretora || '').trim();
-                const carteiraVinde = String(client.CarteiraVinde || '').trim();
-
-                if (consultor) consultorSet.add(consultor);
-                if (corretora) corretorasSet.add(corretora);
-                if (carteiraVinde) carteiraSet.add(carteiraVinde);
-            });
-
-            uniqueCorretoras = Array.from(corretorasSet).sort();
-            uniqueCarteiraVinde = Array.from(carteiraSet).sort();
-            uniqueConsultores = Array.from(consultorSet).sort();
-
-            // Popula Datalists do MODAL
-            populateDatalist('consultores-list', uniqueConsultores);
-            populateDatalist('corretoras-list', uniqueCorretoras);
-            populateDatalist('carteira-list', uniqueCarteiraVinde);
-        }
-
-        function populateDatalist(id, optionsArray) {
-            const datalistElement = document.getElementById(id);
-            if (!datalistElement) return;
-
-            datalistElement.innerHTML = '';
-
-            optionsArray.forEach(option => {
-                if (option) {
-                    const opt = document.createElement('option');
-                    opt.value = option;
-                    datalistElement.appendChild(opt);
-                }
-            });
-        }
-
-        function populateSearchFieldDropdown(headers) {
-            const select = document.getElementById('searchField');
-            select.innerHTML = '<option value="">Buscar em Todos os Campos</option>';
-
-            dynamicColumnHeaders = headers || [];
-
-            const displayHeaders = dynamicColumnHeaders.filter(h => h !== 'AUMFora');
-
-            displayHeaders.forEach(header => {
-                if (header && typeof header === 'string') {
-                    const option = document.createElement('option');
-                    option.value = header;
-                    option.textContent = header;
-                    select.appendChild(option);
-                }
-            });
-
-            toggleFilterState(headers.length > 0);
-        }
-
-        function toggleFilterState(isEnabled) {
-            const searchBox = document.getElementById('searchBox');
-            const searchField = document.getElementById('searchField');
-            const filterGroup = document.getElementById('filterGroup');
-
-            if (isEnabled) {
-                filterGroup.classList.remove('hidden');
-            } else {
-                filterGroup.classList.add('hidden');
-            }
-
-            searchBox.disabled = !isEnabled;
-            searchField.disabled = !isEnabled;
-        }
-        // Função handleConsultorChange REMOVIDA conforme solicitação do usuário.
-
-
-        // --- Funções de Filtro (Lógica Unificada) ---
-        function filterClients() {
-            if (clients.length === 0) {
-                populateTable(clients);
-                return;
-            }
-
-            const searchField = document.getElementById('searchField').value.trim();
-            const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
-
-            const searchOptionsDatalist = document.getElementById('search-options');
-            searchOptionsDatalist.innerHTML = '';
-
-            if (searchField === 'Consultor') {
-                populateDatalist('search-options', uniqueConsultores);
-            } else if (searchField === 'Corretora') {
-                populateDatalist('search-options', uniqueCorretoras);
-            } else if (searchField === 'CarteiraVinde') {
-                populateDatalist('search-options', uniqueCarteiraVinde);
-            } else if (searchField.toLowerCase().includes('assin') || searchField.toLowerCase().includes('subiu')) {
-                populateDatalist('search-options', ['Sim', 'Não']);
-            }
-
-            const filteredClients = clients.filter(client => {
-
-                if (!searchTerm) {
-                    return true;
-                }
-
-                if (searchField !== "" && client.hasOwnProperty(searchField)) {
-                    const clientValue = String(client[searchField] || '').toLowerCase();
-                    return clientValue.includes(searchTerm);
-                }
-
-                const valuesToSearch = dynamicColumnHeaders
-                    .map(header => String(client[header] || ''))
-                    .map(val => val.toLowerCase());
-
-                return valuesToSearch.some(val => val.includes(searchTerm));
-            });
-
-            populateTable(filteredClients);
-        }
-
-        function clearFilters() {
-            document.getElementById('searchField').value = '';
-            document.getElementById('searchBox').value = '';
-            document.getElementById('search-options').innerHTML = '';
-            filterClients();
-        }
-
-
-        // --- Função para preencher a tabela (Agora mais alinhada com seus 21 campos) ---
-        function populateTable(data = clients) {
-            const table = document.getElementById('clientDataTable');
-            const tableHead = table.querySelector('thead');
-            const tableBody = table.querySelector('tbody');
-            if (!tableBody || !tableHead) return;
-
-            // Colunas essenciais, usando os 21 campos como base.
-            const coreColumns = [
-                'Cliente', 'CPF', 'Corretora', 'CodigoConta', 'CarteiraVinde', 'Fee', 'AUM', 'AssinouContrato',
-                'SubiuCobranca'
-            ];
-
-            // Colunas a serem excluídas da visualização PRINCIPAL da tabela (mas ainda no modal)
-            const excludedColumns = [
-                'Email', 'Nacionalidade', 'EstadoCivil', 'Profissao', 'Endereco',
-                'Numero', 'Cidade', 'CEP', 'Pais', 'Complemento', 'Titulo', 'Criado',
-                'Consultor', 'DataContrato', 'SubiuCorretora', 'AUMFora'
-                // 'EmailConsultor' não está aqui pois foi removido
-            ];
-
-            let displayedColumns = [];
-            if (dynamicColumnHeaders.length > 0) {
-                displayedColumns = dynamicColumnHeaders.filter(col => !excludedColumns.includes(col));
-            } else {
-                displayedColumns = coreColumns;
-            }
-
-            // Garante a ordem correta das coreColumns e adiciona o restante
-            const finalDisplayedColumns = coreColumns.filter(col => displayedColumns.includes(col));
-            displayedColumns.forEach(col => {
-                if (!finalDisplayedColumns.includes(col)) {
-                    finalDisplayedColumns.push(col);
-                }
-            });
-
-            // Remove duplicatas e N/A se houver algum erro de mapeamento 
-            const uniqueFinalDisplayedColumns = [...new Set(finalDisplayedColumns)];
-
-
-            // 1. Preenche o cabeçalho (<thead>)
-            tableHead.innerHTML = '<tr></tr>';
-            const headerRow = tableHead.querySelector('tr');
-
-            const formatHeader = (key) => {
-                const headerMap = {
-                    'CodigoConta': 'Cód. Conta',
-                    'DataContrato': 'Data Contrato',
-                    'AssinouContrato': 'Assinou?',
-                    'SubiuCorretora': 'Subiu Corretora?',
-                    'SubiuCobranca': 'Subiu Cobrança?',
-                    'Fee': 'Fee',
-                    'AUM': 'AUM (Custódia)',
-                    'AUMFora': 'AUM (Fora)',
-                    'CarteiraVinde': 'Carteira'
-                };
-                return headerMap[key] || key.replace(/([A-Z])/g, ' $1').trim();
-            };
-
-            uniqueFinalDisplayedColumns.forEach((key) => {
-                const th = document.createElement('th');
-                th.textContent = formatHeader(key);
-                headerRow.appendChild(th);
-            });
-
-            // Adiciona a coluna de Ações (Fixo)
-            const thActions = document.createElement('th');
-            thActions.textContent = 'Ações';
-            headerRow.appendChild(thActions);
-
-            // 2. Preenche o corpo da tabela (<tbody>)
-            tableBody.innerHTML = '';
-
-            document.querySelector('.page-header p').textContent =
-                `Gerencie e visualize todos os dados operacionais e cadastrais dos clientes Vinde. (${data.length} Clientes Exibidos)`;
-
-            data.forEach((client) => {
-
-                // BUSCA CORRETA DO ÍNDICE REAL NO ARRAY GLOBAL
-                const realIndex = clients.findIndex(c =>
-                    String(c.Corretora) === String(client.Corretora) &&
-                    String(c.CodigoConta) === String(client.CodigoConta)
-                );
-
-                if (realIndex === -1 && !isAddingNewClient) {
-                    return;
-                }
-
-                const row = tableBody.insertRow();
-
-                uniqueFinalDisplayedColumns.forEach((key) => {
-                    let cell = row.insertCell();
-                    let value = client[key];
-
-                    if (key === 'AssinouContrato' || key === 'SubiuCorretora' || key ===
-                        'SubiuCobranca') {
-                        cell.innerHTML = getStatusBadge(value);
-                    } else if (key === 'Fee') {
-                        cell.innerHTML = formatPercentage(value);
-                        cell.classList.add('percentage');
-                    } else if (key === 'AUM' || key === 'AUMFora') {
-                        cell.innerHTML = formatCurrency(value);
-                        cell.classList.add('monetary');
-                    } else {
-                        cell.textContent = value || 'N/A';
-                    }
-                });
-
-                // Coluna de Ações
-                let actionCell = row.insertCell();
-                actionCell.innerHTML = `
-                <button class="btn-details" onclick="openModal(${realIndex})">Detalhes</button>
-                <button class="btn-details btn-edit" onclick="openModal(${realIndex}, true)">Editar</button>
-            `;
-            });
-        }
-
-        // --- Funções de Edição e Modal ---
-
-        function openModal(index, isEditMode = false, clientData = null) {
-            currentClientIndex = index;
-            const client = clientData || clients[index];
-            const modal = document.getElementById('clientModal');
-            const validationMessage = document.getElementById('validationMessage');
-
-            validationMessage.style.display = 'none';
-
-            if (!client) {
-                console.error('Cliente não encontrado ou dados não fornecidos:', index);
-                return;
-            }
-
-            const isCurrentlyAdding = isAddingNewClient;
-
-            document.getElementById('modalClientName').style.display = isEditMode && !isCurrentlyAdding ? 'none' :
-                'inline';
-            document.getElementById('inputCliente').style.display = isEditMode ? 'inline' : 'none';
-            document.getElementById('modalClientName').textContent = client.Cliente || (isCurrentlyAdding ?
-                'NOVO CLIENTE' : 'N/A');
-
-            extractAndPopulateDatalists(clients);
-
-            // CORREÇÃO: Itera sobre a lista completa para garantir que todos os campos do modal sejam preenchidos
-            fieldsToUpdate.forEach(field => {
-
-                if (field === 'Cliente') {
-                    document.getElementById('inputCliente').value = client.Cliente || '';
-                }
-
-                const pElement = document.getElementById('modal' + field);
-                const inputElement = document.getElementById('input' + field);
-
-                // Verifica se o elemento p existe no HTML antes de tentar manipulá-lo
-                if (pElement) {
-                    if (field === 'Fee') {
-                        pElement.textContent = formatPercentage(client.Fee);
-                    } else if (field === 'AUM' || field === 'AUMFora') {
-                        pElement.textContent = formatCurrency(client[field]);
-                    } else if (field === 'AssinouContrato' || field === 'SubiuCorretora' || field ===
-                        'SubiuCobranca') {
-                        pElement.innerHTML = getStatusBadge(client[field]);
-                    } else {
-                        pElement.textContent = client[field] || 'N/A';
-                    }
-                }
-
-                // Verifica se o elemento input existe no HTML antes de tentar manipulá-lo
-                if (inputElement) {
-                    if (field === 'Fee' || field === 'AUM' || field === 'AUMFora') {
-                        inputElement.value = parseFloat(client[field] || 0);
-                    } else if (field === 'DataContrato' && client[field]) {
-                        const parts = String(client[field]).split('/');
-                        if (parts.length === 3) {
-                            inputElement.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                        } else {
-                            inputElement.value = '';
-                        }
-                    } else {
-                        inputElement.value = client[field] || '';
-                    }
-
-                    // Garante que o estado de visualização/edição seja aplicado corretamente
-                    if (pElement) pElement.style.display = isEditMode ? 'none' : 'block';
-                    inputElement.style.display = isEditMode ? 'block' : 'none';
-                }
-            });
-
-            modal.style.display = "block";
-
-            if (isEditMode) {
-                enterEditMode();
-            } else {
-                document.getElementById('btnEditMode').style.display = 'inline-block';
-                document.getElementById('btnSave').style.display = 'none';
-                document.getElementById('btnCancel').style.display = 'none';
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('clientModal').style.display = "none";
-            document.getElementById('validationMessage').style.display = 'none';
-            isAddingNewClient = false;
-            currentClientIndex = null;
-            filterClients();
-        }
-
-        function enterEditMode() {
-            // Exibe todos os inputs e esconde os parágrafos para edição
-            document.querySelectorAll('.modal-input').forEach(i => i.style.display = 'block');
-            document.querySelectorAll('.modal-grid p, .modal-grid-address p').forEach(p => p.style.display = 'none');
-
-            document.getElementById('btnEditMode').style.display = 'none';
-            document.getElementById('btnSave').style.display = 'inline-block';
-            document.getElementById('btnCancel').style.display = 'inline-block';
-
-            document.getElementById('modalClientName').style.display = 'none';
-            document.getElementById('inputCliente').style.display = 'inline';
-
-            document.getElementById('validationMessage').style.display = 'none';
-        }
-
-        function cancelEdit() {
-            if (isAddingNewClient) {
-                closeModal();
-                return;
-            }
-
-            if (currentClientIndex !== null) {
-                openModal(currentClientIndex, false);
-            }
-        }
-
-        function validateClientData(clientData) {
-            const errors = [];
-            if (!clientData.Cliente || clientData.Cliente.trim() === '') {
-                errors.push("O campo 'Cliente' é obrigatório.");
-            }
-            if (!clientData.Corretora || clientData.Corretora.trim() === "") {
-                errors.push("O campo 'Corretora' é obrigatório.");
-            }
-            if (!clientData.CodigoConta || clientData.CodigoConta.trim() === "") {
-                errors.push("O campo 'Código de Conta' é obrigatório.");
-            }
-
-            const validationMessage = document.getElementById('validationMessage');
-            if (errors.length > 0) {
-                validationMessage.innerHTML = '<strong>⚠️ Erro de Validação:</strong><br>' + errors.join('<br>');
-                validationMessage.style.display = 'block';
-                return false;
-            }
-            return true;
-        }
-
-        function saveEdits() {
-            const validationMessage = document.getElementById('validationMessage');
-
-            let newClientData = {};
-
-            // Popula newClientData com os valores dos inputs do modal
-            fieldsToUpdate.forEach(field => {
-                const inputElement = document.getElementById('input' + field);
-                // Verifica se o input existe antes de tentar pegar o valor
-                if (inputElement) {
-                    newClientData[field] = inputElement.value;
-                } else {
-                    newClientData[field] = '';
-                }
-            });
-
-            // Tratamento de valores numéricos 
-            ['Fee', 'AUM', 'AUMFora'].forEach(key => {
-                const inputEl = document.getElementById('input' + key);
-                const inputVal = inputEl ? inputEl.value : (newClientData[key] || 0);
-                newClientData[key] = parseFloat(inputVal) || 0;
-            });
-
-            // Tratamento de Data
-            const inputDataContrato = document.getElementById('inputDataContrato');
-            const dataContrato = inputDataContrato ? inputDataContrato.value : newClientData.DataContrato;
-
-            if (dataContrato) {
-                // Se for formato YYYY-MM-DD (do input type="date")
-                if (dataContrato.includes('-')) {
-                    const [year, month, day] = dataContrato.split('-');
-                    newClientData.DataContrato = `${day}/${month}/${year}`;
-                } else {
-                    newClientData.DataContrato = dataContrato;
-                }
-            } else {
-                newClientData.DataContrato = '';
-            }
-
-            if (!validateClientData(newClientData)) {
-                return;
-            }
-
-            const inputCorretora = newClientData.Corretora.trim();
-            const inputCodigoConta = newClientData.CodigoConta.trim();
-
-            const isDuplicateAccount = clients.some((client, index) =>
-                String(client.Corretora).trim() === inputCorretora &&
-                String(client.CodigoConta).trim() === inputCodigoConta &&
-                (isAddingNewClient || index !== currentClientIndex)
+        data.forEach((client) => {
+            // Chaves únicas para encontrar o índice (usando Corretora e Código da conta)
+            const CORRETORA_KEY = ID_TO_EXCEL_MAP.Corretora;
+            const CODIGO_CONTA_KEY = ID_TO_EXCEL_MAP.Codigo_da_conta;
+
+            const realIndex = clients.findIndex(c => 
+                String(c[CORRETORA_KEY]) === String(client[CORRETORA_KEY]) && 
+                String(c[CODIGO_CONTA_KEY]) === String(client[CODIGO_CONTA_KEY])
             );
 
-            if (isDuplicateAccount) {
-                validationMessage.textContent =
-                    `Erro: A conta com Corretora "${inputCorretora}" e Código "${inputCodigoConta}" já existe na base.`;
-                validationMessage.style.display = 'block';
-                return;
-            }
+            if (realIndex === -1 && !isAddingNewClient && clients.length > 0) return;
 
-            validationMessage.style.display = 'none';
-
-            if (isAddingNewClient) {
-                const finalClientData = {};
-                const finalHeaders = dynamicColumnHeaders.length > 0 ? dynamicColumnHeaders : fieldsToUpdate;
-
-                finalHeaders.forEach(header => {
-                    finalClientData[header] = newClientData.hasOwnProperty(header) ? newClientData[header] : '';
-                });
-
-                clients.push(finalClientData);
-                isAddingNewClient = false;
-
-                if (dynamicColumnHeaders.length === 0) {
-                    dynamicColumnHeaders = finalHeaders;
-                    populateSearchFieldDropdown(dynamicColumnHeaders);
+            const row = tableBody.insertRow();
+            
+            displayedColumnsKeys.forEach((key) => {
+                let cell = row.insertCell();
+                let value = client[key];
+                
+                // Formatação condicional
+                if (key === ID_TO_EXCEL_MAP.Assinou_Contrato || key === ID_TO_EXCEL_MAP.Subiu_Cliente_Corretora) {
+                    cell.innerHTML = getStatusBadge(value);
+                } else if (key === ID_TO_EXCEL_MAP.AUM) {
+                    cell.innerHTML = formatCurrency(value);
+                    cell.classList.add('monetary');
+                } else if (key === ID_TO_EXCEL_MAP.FEE) { // FORMATANDO O FEE
+                    cell.textContent = value || 'N/A';
+                    // Adiciona o símbolo de porcentagem se o valor não for vazio ou N/A
+                    if (cell.textContent !== 'N/A' && cell.textContent.trim() !== '') {
+                        cell.textContent += '%'; 
+                    }
+                } else {
+                    // Outros campos
+                    cell.textContent = value || 'N/A';
                 }
-            } else {
-                const client = clients[currentClientIndex];
-                fieldsToUpdate.forEach(field => {
-                    client[field] = newClientData[field];
-                });
-            }
-
-            saveClientsToStorage();
-            extractAndPopulateDatalists(clients);
-            filterClients();
-            closeModal();
-        }
-
-        function addNewClient() {
-            isAddingNewClient = true;
-            currentClientIndex = clients.length;
-
-            const emptyClient = {};
-            const initialHeaders = dynamicColumnHeaders.length > 0 ? dynamicColumnHeaders : fieldsToUpdate;
-            initialHeaders.forEach(header => {
-                emptyClient[header] = "";
             });
 
-            emptyClient.Cliente = "Novo Cliente";
-            emptyClient.AssinouContrato = "Não";
-            emptyClient.SubiuCorretora = "Não";
-            emptyClient.SubiuCobranca = "Não";
-            emptyClient.Fee = 0;
-            emptyClient.AUM = 0;
-            emptyClient.AUMFora = 0;
-            emptyClient.DataContrato = '';
-
-            openModal(currentClientIndex, true, emptyClient);
-
-            if (clients.length === 0 && dynamicColumnHeaders.length === 0) {
-                populateSearchFieldDropdown(fieldsToUpdate);
-            }
-        }
-
-        // --- Funções de Manutenção e Loader ---
-        function exportClientsToExcel() {
-            if (clients.length === 0) {
-                alert("Não há dados para exportar.");
-                return;
-            }
-
-            const ws = XLSX.utils.json_to_sheet(clients);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "BaseDeDadosVinde");
-
-            const filename = `BaseDeDados_Vinde_${new Date().toISOString().slice(0, 10)}.xlsx`;
-
-            XLSX.writeFile(wb, filename);
-            alert(`Arquivo "${filename}" exportado com sucesso!`);
-        }
-
-        function resetClients() {
-            if (confirm(
-                    "Tem certeza que deseja REINICIAR a tabela? Todos os dados serão perdidos. (Você pode recarregar via Excel)."
-                    )) {
-                clients = [];
-                dynamicColumnHeaders = [];
-
-                saveClientsToStorage();
-
-                populateTable();
-                populateSearchFieldDropdown([]);
-                extractAndPopulateDatalists(clients);
-                clearFilters();
-            }
-        }
-
-        function hideLoader() {
-            document.getElementById('loader').style.display = 'none';
-            const main = document.getElementById('mainContainer');
-            main.style.opacity = '1';
-            main.style.transform = 'translateY(0)';
-        }
-
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                loadClientsFromStorage();
-                toggleFilterState(clients.length > 0);
-                hideLoader();
-            }, 300);
+            // Coluna de Ações
+            let actionCell = row.insertCell();
+            actionCell.innerHTML = `
+                <button class="btn-details" onclick="openModal(${realIndex})">Detalhes</button>
+                <button class="btn-details" style="background-color: var(--amarelo); margin-left: 5px;" onclick="openModal(${realIndex}, true)">Editar</button>
+            `;
         });
+    }
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('mainContainer');
-            const toggleBtn = document.querySelector('.btn-toggle');
+    // --- Funções de Edição e Modal ---
+    function openModal(index, isEditMode = false, clientData = null) {
+        currentClientIndex = index;
+        const client = clientData || clients[index]; 
+        const modal = document.getElementById('clientModal');
+        const validationMessage = document.getElementById('validationMessage');
+        
+        validationMessage.style.display = 'none'; 
 
-            sidebar.classList.toggle('closed');
-            main.classList.toggle('closed');
-
-            const isClosed = sidebar.classList.contains('closed');
-            toggleBtn.textContent = isClosed ? '☰' : '✕';
-            toggleBtn.style.transform = isClosed ? "rotate(0deg)" : "rotate(90deg)";
+        if (!client) {
+            console.error('Cliente não encontrado ou dados não fornecidos:', index);
+            return;
         }
+        
+        // Usa o nome exato do Excel para a chave 'Nome do cliente'
+        const CLIENTE_KEY = ID_TO_EXCEL_MAP.Nome_do_cliente;
+        document.getElementById('modalNome_do_cliente').style.display = isEditMode && !isAddingNewClient ? 'none' : 'inline';
+        document.getElementById('inputNome_do_cliente').style.display = isEditMode ? 'inline' : 'none';
+        document.getElementById('modalNome_do_cliente').textContent = client[CLIENTE_KEY] || (isAddingNewClient ? 'NOVO CLIENTE' : 'N/A');
+        document.getElementById('inputNome_do_cliente').value = client[CLIENTE_KEY] || '';
+        
+        extractAndPopulateDatalists(clients);
 
-        window.onclick = function (event) {
-            const modal = document.getElementById('clientModal');
-            if (event.target == modal) {
-                if (isAddingNewClient) {
-                    cancelEdit();
-                } else if (document.getElementById('btnSave').style.display === 'inline-block') {
-                    cancelEdit();
-                } else {
-                    closeModal();
-                }
-            }
-        }
+        fieldsToUpdate.forEach(idKey => {
+            const excelKey = ID_TO_EXCEL_MAP[idKey];
+            
+            if (idKey === 'Nome_do_cliente') return; // Já tratado acima
+            
+            let modalElement = document.getElementById('modal' + idKey);
+            let inputElement = document.getElementById('input' + idKey);
 
-        // FUNÇÃO PARA CARREGAR EXCEL (Com Normalização)
-        document.getElementById('fileInput').addEventListener('change', function (e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            document.getElementById('loader').style.display = 'flex';
-            document.querySelector('.loader-text').textContent = 'Processando Planilha...';
-
-            const reader = new FileReader();
-            reader.onload = function (evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, {
-                    type: 'array'
-                });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-
-                const rawSheet = XLSX.utils.sheet_to_json(worksheet, {
-                    raw: false,
-                    defval: "",
-                    dateNF: 'dd/mm/yyyy'
-                });
-
-                let normalizedClients = [];
-
-                if (rawSheet.length > 0) {
-                    normalizedClients = rawSheet.map(client => {
-                        const newClient = {};
-                        Object.keys(client).forEach(key => {
-                            const normalizedKey = String(key).toLowerCase().trim();
-                            const targetKey = EXCEL_HEADER_MAP[normalizedKey];
-
-                            if (targetKey) {
-                                let value = client[key];
-
-                                if (['AssinouContrato', 'SubiuCobranca', 'SubiuCorretora']
-                                    .includes(targetKey) && typeof value === 'string') {
-                                    value = value.toLowerCase().includes('sim') ? 'Sim' :
-                                        'Não';
-                                }
-
-                                if (['Fee', 'AUM', 'AUMFora'].includes(targetKey)) {
-                                    if (typeof value === 'string') {
-                                        value = value.replace('R$', '').replace(/\./g, '')
-                                            .replace(',', '.').trim();
-                                    }
-                                    value = parseFloat(value) || 0;
-                                }
-
-                                newClient[targetKey] = value;
-                            }
-                        });
-
-                        fieldsToUpdate.forEach(field => {
-                            // Garantimos que o 'EmailConsultor' nunca seja lido
-                            if (field === 'EmailConsultor') return;
-
-                            if (!newClient.hasOwnProperty(field)) {
-                                newClient[field] = '';
-                            }
-                        });
-
-                        return newClient;
-                    });
-
-                    // Filtra EmailConsultor caso ele tenha sido adicionado acidentalmente no Excel
-                    if (normalizedClients.length > 0) {
-                        dynamicColumnHeaders = Object.keys(normalizedClients[0]).filter(h => h !==
-                            'EmailConsultor');
-                    } else {
-                        dynamicColumnHeaders = fieldsToUpdate.filter(h => h !== 'EmailConsultor');
+            if (client.hasOwnProperty(excelKey)) {
+                let value = client[excelKey];
+                
+                // Exibição no Modal (Visualização)
+                if (idKey === 'AUM') {
+                    modalElement.textContent = formatCurrency(value);
+                } else if (idKey === 'FEE') { // FORMATANDO O FEE NO MODAL
+                    modalElement.textContent = value || 'N/A';
+                    // Adiciona o símbolo de porcentagem se o valor não for vazio ou N/A
+                    if (modalElement.textContent !== 'N/A' && modalElement.textContent.trim() !== '') {
+                        modalElement.textContent += '%'; 
                     }
-
-                    populateSearchFieldDropdown(dynamicColumnHeaders);
-                } else {
-                    dynamicColumnHeaders = [];
-                    populateSearchFieldDropdown([]);
+                } else if (idKey.includes('Assinou') || idKey.includes('Subiu')) {
+                    modalElement.innerHTML = getStatusBadge(value);
+                } else if (modalElement) {
+                    modalElement.textContent = value || 'N/A';
                 }
-
-                clients = normalizedClients;
-
-                saveClientsToStorage();
-                populateTable();
-                extractAndPopulateDatalists(clients);
-                filterClients();
-
-                hideLoader();
-            };
-            reader.readAsArrayBuffer(file);
+                
+                // Preenchimento do Input (Edição)
+                if (inputElement) {
+                    if (idKey === 'AUM') {
+                        inputElement.value = parseFloat(value || 0);
+                    } else if (idKey === 'Criado' && value) {
+                        // Converte de DD/MM/AAAA para AAAA-MM-DD para o input type="date"
+                        const dateParts = String(value).split('/');
+                        if(dateParts.length === 3) {
+                           inputElement.value = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                        } else {
+                           inputElement.value = value || '';
+                        }
+                    }
+                    else {
+                        inputElement.value = value || '';
+                    }
+                }
+            } else {
+                // Se o campo do Excel não existir (ex: Consultor), define como N/A e limpa o input
+                if (modalElement) modalElement.textContent = 'N/A';
+                if (inputElement) inputElement.value = '';
+            }
         });
-    </script>
-</body>
+        
+        modal.style.display = "block";
 
+        if(isEditMode){
+            enterEditMode();
+        } else {
+            cancelEdit(); 
+        }
+    }
+    
+    function closeModal() {
+        document.getElementById('clientModal').style.display = "none";
+        document.getElementById('validationMessage').style.display = 'none';
+        isAddingNewClient = false; 
+        currentClientIndex = null;
+        filterClients(); 
+    }
+
+    function enterEditMode(){
+        document.querySelectorAll('.modal-input').forEach(i=>i.style.display='block');
+        document.querySelectorAll('.modal-grid p, .modal-grid-address p').forEach(p=>p.style.display='none');
+        
+        document.getElementById('btnEditMode').style.display='none';
+        document.getElementById('btnSave').style.display='inline-block';
+        document.getElementById('btnCancel').style.display='inline-block';
+        
+        document.getElementById('modalNome_do_cliente').style.display = 'none';
+        document.getElementById('inputNome_do_cliente').style.display = 'inline';
+        
+        document.getElementById('validationMessage').style.display = 'none';
+    }
+
+    function cancelEdit(){
+        if (isAddingNewClient) {
+            closeModal();
+            return;
+        }
+
+        document.querySelectorAll('.modal-input').forEach(i=>i.style.display='none');
+        document.querySelectorAll('.modal-grid p, .modal-grid-address p').forEach(p=>p.style.display='block');
+        
+        document.getElementById('btnEditMode').style.display='inline-block';
+        document.getElementById('btnSave').style.display='none';
+        document.getElementById('btnCancel').style.display='none';
+        
+        document.getElementById('modalNome_do_cliente').style.display = 'inline';
+        document.getElementById('inputNome_do_cliente').style.display = 'none';
+        
+        if (currentClientIndex !== null) {
+            openModal(currentClientIndex, false); 
+        }
+    }
+    
+    function saveEdits(){
+        const validationMessage = document.getElementById('validationMessage');
+        
+        const CORRETORA_KEY = ID_TO_EXCEL_MAP.Corretora;
+        const CODIGO_CONTA_KEY = ID_TO_EXCEL_MAP.Codigo_da_conta;
+        const CRIADO_KEY = ID_TO_EXCEL_MAP.Criado;
+        const AUM_KEY = ID_TO_EXCEL_MAP.AUM;
+        const FEE_KEY = ID_TO_EXCEL_MAP.FEE;
+        
+        const inputCorretora = document.getElementById('inputCorretora').value.trim();
+        const inputCodigoConta = document.getElementById('inputCodigo_da_conta').value.trim();
+        
+        let newClientData = {};
+        
+        // 1. Coleta dados dos inputs e mapeia para as chaves EXATAS do Excel
+        fieldsToUpdate.forEach(idKey => {
+            const excelKey = ID_TO_EXCEL_MAP[idKey];
+            const inputEl = document.getElementById('input'+idKey);
+            if (inputEl) {
+                newClientData[excelKey] = inputEl.value;
+            }
+        });
+        
+        // 2. Trata valores numéricos e data
+        
+        // AUM: Sempre salva como string de float
+        const inputAUM = document.getElementById('inputAUM').value;
+        newClientData[AUM_KEY] = String(parseFloat(inputAUM) || 0);
+
+        // FEE: Salva como string exata (já é um input type="text")
+        newClientData[FEE_KEY] = document.getElementById('inputFEE').value; 
+
+        // Criado: Converte de aaaa-mm-dd para dd/mm/aaaa
+        const criadoInput = document.getElementById('inputCriado').value;
+        if (criadoInput) {
+            const [year, month, day] = criadoInput.split('-');
+            newClientData[CRIADO_KEY] = `${day}/${month}/${year}`;
+        } else {
+             newClientData[CRIADO_KEY] = '';
+        }
+        
+        // 3. Validação
+        if (inputCorretora === "" || inputCodigoConta === "") {
+             validationMessage.textContent = "Os campos Corretora e Código da Conta são obrigatórios para a identificação da conta.";
+             validationMessage.style.display = 'block';
+             return;
+        }
+
+        const isDuplicateAccount = clients.some((client, index) => 
+            String(client[CORRETORA_KEY]).trim() === inputCorretora && 
+            String(client[CODIGO_CONTA_KEY]).trim() === inputCodigoConta &&
+            (isAddingNewClient || index !== currentClientIndex) 
+        );
+
+        if (isDuplicateAccount) {
+            validationMessage.textContent = `Erro: A conta com Corretora "${inputCorretora}" e Código "${inputCodigoConta}" já existe na base.`;
+            validationMessage.style.display = 'block';
+            return; 
+        }
+        
+        validationMessage.style.display = 'none'; 
+
+        // 4. Salvar
+        if (isAddingNewClient) {
+            // Garante que o novo objeto tenha todas as chaves dinâmicas
+            const finalClientData = {};
+            dynamicColumnHeaders.forEach(header => {
+                finalClientData[header] = newClientData[header] || '';
+            });
+            clients.push(finalClientData);
+            isAddingNewClient = false; 
+            
+            // Se esta é a primeira entrada, define os headers dinâmicos
+            if (dynamicColumnHeaders.length === 0) {
+                 dynamicColumnHeaders = Object.keys(finalClientData);
+                 populateSearchFieldDropdown(dynamicColumnHeaders);
+            }
+        } else {
+            // Atualiza o cliente existente
+            const client = clients[currentClientIndex];
+            Object.assign(client, newClientData); 
+        }
+        
+        saveClientsToStorage();
+        extractAndPopulateDatalists(clients);
+        filterClients(); 
+        closeModal();
+    }
+    
+    function addNewClient(){
+        isAddingNewClient = true;
+        currentClientIndex = clients.length; 
+        
+        const emptyClient = {};
+        // Se já houver clientes, usa os headers existentes. Senão, usa a lista padrão.
+        const initialHeaders = dynamicColumnHeaders.length > 0 ? dynamicColumnHeaders : Object.keys(EXCEL_TO_ID_MAP);
+        
+        initialHeaders.forEach(header => {
+            emptyClient[header] = "";
+        });
+
+        // Valores padrão para o novo cliente
+        emptyClient[ID_TO_EXCEL_MAP.Nome_do_cliente] = "Novo Cliente";
+        emptyClient[ID_TO_EXCEL_MAP.Assinou_Contrato] = "Não";
+        emptyClient[ID_TO_EXCEL_MAP.Subiu_Cliente_Corretora] = "Não";
+        emptyClient[ID_TO_EXCEL_MAP.Subiu_Base_de_Cobranca] = "Não";
+        emptyClient[ID_TO_EXCEL_MAP.FEE] = ""; 
+        emptyClient[ID_TO_EXCEL_MAP.AUM] = "0";
+        emptyClient[ID_TO_EXCEL_MAP.Criado] = '';
+        
+        openModal(currentClientIndex, true, emptyClient); 
+        
+        if (clients.length === 0 && dynamicColumnHeaders.length === 0) {
+            populateSearchFieldDropdown(Object.keys(EXCEL_TO_ID_MAP));
+        }
+    }
+    
+    // Função para Exportar a Base de Dados
+    function exportClientsToExcel() {
+        if (clients.length === 0) {
+            alert("Não há dados para exportar.");
+            return;
+        }
+
+        const ws = XLSX.utils.json_to_sheet(clients);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "BaseDeDadosVinde");
+        const filename = `BaseDeDados_Vinde_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, filename);
+    }
+
+    function resetClients() {
+        if (confirm("Tem certeza que deseja REINICIAR a tabela? Todos os dados serão perdidos. (Você pode recarregar via Excel).")) {
+            clients = [];
+            dynamicColumnHeaders = [];
+            
+            saveClientsToStorage(); 
+
+            populateTable();
+            populateSearchFieldDropdown([]);
+            extractAndPopulateDatalists(clients); 
+            clearFilters();
+        }
+    }
+
+    // --- Loader e Sidebar ---
+    
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+        const main = document.getElementById('mainContainer');
+        main.style.opacity = '1';
+        main.style.transform = 'translateY(0)';
+    }
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            loadClientsFromStorage(); 
+            toggleFilterState(clients.length > 0); 
+            hideLoader();
+        }, 1500); 
+    });
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContainer');
+      const toggleBtn = document.querySelector('.btn-toggle');
+      
+      sidebar.classList.toggle('closed');
+      main.classList.toggle('closed');
+
+      const isClosed = sidebar.classList.contains('closed');
+      toggleBtn.textContent = isClosed ? '☰' : '✕'; 
+      toggleBtn.style.transform = isClosed ? "rotate(0deg)" : "rotate(90deg)"; 
+    }
+    
+    window.onclick = function(event) {
+        const modal = document.getElementById('clientModal');
+        if (event.target == modal) {
+            if (isAddingNewClient) {
+                cancelEdit(); 
+            } else {
+                closeModal();
+            }
+        }
+    }
+    
+    // FUNÇÃO PARA CARREGAR EXCEL
+    document.getElementById('fileInput').addEventListener('change',function(e){
+      const file=e.target.files[0]; if(!file) return;
+      
+      document.getElementById('loader').style.display = 'flex';
+      document.querySelector('.loader-text').textContent = 'Processando Planilha...';
+
+      const reader=new FileReader();
+      reader.onload=function(evt){
+        const data=new Uint8Array(evt.target.result);
+        const workbook=XLSX.read(data,{type:'array'});
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // A chave 'header: 1' garante que ele leia a primeira linha como cabeçalho
+        // A opção 'defval: ""' garante que células vazias sejam strings vazias e não 'undefined'
+        const sheet = XLSX.utils.sheet_to_json(worksheet, {raw: false, defval: ""});
+        
+        if (sheet.length > 0) {
+            const headers = Object.keys(sheet[0]); 
+            dynamicColumnHeaders = headers; 
+            populateSearchFieldDropdown(headers); 
+        } else {
+            dynamicColumnHeaders = [];
+            populateSearchFieldDropdown([]);
+        }
+        
+        clients = sheet; 
+        
+        saveClientsToStorage();
+
+        populateTable();
+        extractAndPopulateDatalists(clients); 
+        filterClients(); 
+        
+        hideLoader();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+</script>
+</body>
 </html>
