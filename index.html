@@ -3,32 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Principal</title>
+<title>Dashboard Principal - Vinde Investimentos</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
 
 :root {
+  /* Cores Base */
   --azul-escuro: #182C4B;
   --verde-claro: #00BFAE;
   --cinza-claro: #F4F6F9;
   --cinza-escuro: #4A4A4A;
   --branco: #FFFFFF;
-  --amarelo: #F39C12;
-  --vermelho: #E74C3C;
-  --verde-secundario: #2ECC71;
+  --amarelo: #F39C12; /* Assinados Pendentes */
+  --vermelho: #E74C3C; /* Leads / Alerta / Menor Fee */
+  --verde-secundario: #2ECC71; /* Custódia / Oportunidade / Maior Fee */
   --roxo: #9b59b6; 
-  --laranja-alerta: #FF7043; 
   --verde-receita: #4CAF50; 
-  --azul-vip: #03A9F4; 
   
-  /* Cores para os novos Gráficos */
-  --cor-principal-a: #182C4B; /* Azul Escuro */
-  --cor-principal-b: #00BFAE; /* Verde Claro */
-  --cor-alerta-alta: #E74C3C; 
-  --cor-oportunidade: #F39C12; 
-  --cor-conversao: #4CAF50; 
+  /* Cores para o Funil de Conversão (AJUSTADAS) */
+  --funil-leads: var(--vermelho); 
+  --funil-assinou: var(--amarelo); 
+  --funil-custodia: var(--verde-secundario); 
+  
+  /* Cores para o Gráfico de Oportunidade (AJUSTADAS) */
+  --oportunidade-destaque: var(--verde-secundario); /* Verde para o maior Fee (Oportunidade) */
+  --oportunidade-menor: var(--vermelho); /* Vermelho para o menor Fee (Atenção/Risco) */
 }
 
 /* Reset */
@@ -70,10 +71,10 @@ html, body { height: 100%; }
 .navbar .btn-sair:hover, .navbar .btn-toggle:hover { opacity:0.9; }
 .navbar .btn-toggle { 
     display:flex; align-items:center; justify-content:center; 
-    transition: transform 0.3s ease; /* CORREÇÃO AQUI para a animação da rotação */
+    transition: transform 0.3s ease;
 }
 
-/* Sidebar (AQUI ESTÃO AS ALTERAÇÕES SOLICITADAS) */
+/* Sidebar */
 .sidebar {
   width:250px; background-color: var(--cinza-claro); padding:20px;
   position:fixed; top:60px; left:0; height:calc(100% - 60px); overflow-y:auto;
@@ -125,12 +126,17 @@ html, body { height: 100%; }
     gap: 20px;
     margin-bottom: 30px;
 }
-/* KPI Cards (Estilos Omitidos para concisão...) */
-.kpi-card { background-color: var(--branco); padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 5px solid var(--azul-escuro); }
+/* KPI Cards */
+.kpi-card { 
+    background-color: var(--branco); padding: 20px; border-radius: 8px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 5px solid var(--azul-escuro); 
+    min-height: 120px;
+}
 .kpi-card-title { font-size: 14px; color: var(--cinza-escuro); text-transform: uppercase; margin-bottom: 5px; }
 .kpi-card-value { font-size: 28px; font-weight: 700; color: var(--azul-escuro); }
 .kpi-card-change { font-size: 12px; margin-top: 5px; font-weight: 500; }
 .positive { color: var(--verde-secundario); }
+.neutral { color: var(--amarelo); }
 
 /* Chart Area */
 .chart-area {
@@ -172,6 +178,44 @@ html, body { height: 100%; }
     margin-bottom: 0;
 }
 
+/* Área de Filtros */
+.filter-area {
+    background-color: var(--branco);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+    border: 1px solid var(--cinza-claro);
+}
+
+.filter-area h4 {
+    color: var(--azul-escuro);
+    font-size: 16px;
+    margin: 0;
+}
+
+.filter-area select {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    min-width: 180px;
+    flex-grow: 1;
+    cursor: pointer;
+    background-color: var(--cinza-claro);
+}
+
+.filtered-count {
+    font-weight: 600;
+    color: var(--verde-secundario);
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
 /* Footer fixo */
 .footer {
   position: fixed; bottom:0; width:100%; height:60px;
@@ -185,6 +229,8 @@ html, body { height: 100%; }
   .sidebar.open { left:0; }
   .main-container { margin-left:0; padding-bottom:80px; padding-top: 80px; }
   .dashboard-grid, .chart-row { grid-template-columns: 1fr; }
+  .filter-area { flex-direction: column; align-items: stretch; }
+  .filtered-count { margin-left: 0; margin-top: 10px; text-align: center; }
 }
 
 </style>
@@ -216,36 +262,52 @@ html, body { height: 100%; }
     <h1>Visão Estratégica & Oportunidades</h1>
     <p style="margin-bottom: 20px; color: var(--cinza-escuro);">Insights acionáveis sobre concentração de risco, potencial de receita e taxas de conversão da base.</p>
 
+    <div class="filter-area">
+        <h4>Filtros de Segmentação:</h4>
+        
+        <select id="filterCorretora" onchange="applyFilters()">
+            <option value="Todos">Corretora (Todas)</option>
+        </select>
+        
+        <select id="filterStatus" onchange="applyFilters()">
+            <option value="Todos">Status de Conversão (Todos)</option>
+            <option value="CustodiaPendentes">Alerta: Assinou, Custódia Pendente</option>
+            <option value="SemAssinatura">Foco Vendas: Sem Contrato Assinado</option>
+        </select>
+        
+        <span id="filteredCount" class="filtered-count">0 Clientes Filtrados</span>
+    </div>
+
     <div class="dashboard-grid">
         
         <div class="kpi-card">
             <div class="kpi-card-title">AUM TOTAL (CUSTÓDIA)</div>
             <div class="kpi-card-value" id="kpiAUMTotal">R$ 0,00</div>
-            <div class="kpi-card-change positive" id="kpiAUMChange">Carregando...</div>
+            <div class="kpi-card-change positive" id="kpiAUMChange">Base total: 0 clientes.</div>
         </div>
         
         <div class="kpi-card" style="border-left-color: var(--verde-receita);">
             <div class="kpi-card-title">RECEITA ANUAL PROJETADA</div>
-            <div class="kpi-card-value" id="kpiReceitaMensal">R$ 0,00</div>
-            <div class="kpi-card-change positive" id="kpiReceitaChange">Baseado em Fee Médio.</div>
+            <div class="kpi-card-value" id="kpiReceitaAnual">R$ 0,00</div>
+            <div class="kpi-card-change positive" id="kpiReceitaChange">Com Fee Médio de 0.00%.</div>
         </div>
         
         <div class="kpi-card" style="border-left-color: var(--verde-claro);">
             <div class="kpi-card-title">TOTAL DE CLIENTES</div>
             <div class="kpi-card-value" id="kpiTotalClientes">0</div>
-            <div class="kpi-card-change positive" id="kpiClientesChange">Dados carregados da base.</div>
+            <div class="kpi-card-change positive" id="kpiClientesChange">Assinados: 0, Custódia: 0</div>
         </div>
 
         <div class="kpi-card" style="border-left-color: var(--amarelo);">
             <div class="kpi-card-title">FEE MÉDIO PONDERADO</div>
             <div class="kpi-card-value" id="kpiFeeMedio">0.00%</div>
-            <div class="kpi-card-change neutral" id="kpiFeeChange">Calculado pelo AUM.</div>
+            <div class="kpi-card-change neutral" id="kpiFeeChange">Baseado no AUM filtrado.</div>
         </div>
 
         <div class="kpi-card" style="border-left-color: var(--roxo);">
             <div class="kpi-card-title">TICKET MÉDIO POR CLIENTE</div>
             <div class="kpi-card-value" id="kpiTicketMedio">R$ 0,00</div>
-            <div class="kpi-card-change neutral" id="kpiTicketChange">Calculado pelo AUM total.</div>
+            <div class="kpi-card-change neutral" id="kpiTicketChange">Base para otimização de serviço.</div>
         </div>
         
         </div>
@@ -255,7 +317,7 @@ html, body { height: 100%; }
         <div style="max-width: 450px; margin: 0 auto; height: 400px; display: flex; align-items: center; justify-content: center;">
             <canvas id="aumCorretoraChart"></canvas>
             <div id="corretoraNoDataMessage" class="chart-placeholder" style="display: none; height: 100%; width: 100%;">
-                 <p>Sem dados de AUM ou Corretora (Verifique a coluna 'Corretora' na Base de Dados).</p>
+                 <p>Sem dados de AUM ou Corretora.</p>
             </div>
         </div>
     </div>
@@ -272,11 +334,11 @@ html, body { height: 100%; }
         </div>
         
         <div class="chart-area">
-            <h2> Taxas de Conversão Imediatas (Funil %$)</h2>
+            <h2> Funil de Conversão (Assinatura para Custódia)</h2>
             <div style="max-width: 100%; margin: 0 auto; height: 400px; display: flex; align-items: center; justify-content: center;">
-                <canvas id="conversionRatesChart"></canvas>
-                <div id="ratesNoDataMessage" class="chart-placeholder" style="display: none; height: 100%; width: 100%;">
-                    <p>Sem dados de Assinatura/Custódia para calcular as taxas de conversão.</p>
+                <canvas id="conversionFunnelChart"></canvas>
+                <div id="funnelNoDataMessage" class="chart-placeholder" style="display: none; height: 100%; width: 100%;">
+                    <p>Sem dados de Clientes para Funil (Total, Assinados, Custódia).</p>
                 </div>
             </div>
         </div>
@@ -289,6 +351,59 @@ html, body { height: 100%; }
 let clientsData = [];
 let chartInstances = {}; // Objeto para gerenciar todas as instâncias de gráficos
 
+// --- VARIÁVEIS JAVASCRIPT LENDO AS CORES CSS PARA OS GRÁFICOS ---
+// Esta é a correção para o Chart.js conseguir ler as variáveis CSS dinâmicas.
+const style = getComputedStyle(document.body);
+const AZUL_ESCURO = style.getPropertyValue('--azul-escuro').trim();
+
+// Cores Funil e Oportunidade
+const COR_OPORTUNIDADE_MAIOR = style.getPropertyValue('--oportunidade-destaque').trim();
+const COR_OPORTUNIDADE_MENOR = style.getPropertyValue('--oportunidade-menor').trim();
+const COR_FUNIL_CUSTODIA = style.getPropertyValue('--funil-custodia').trim();
+const COR_FUNIL_ASSINOU = style.getPropertyValue('--funil-assinou').trim();
+const COR_FUNIL_LEADS = style.getPropertyValue('--funil-leads').trim();
+
+
+// --- MAPAS DE CHAVES DO EXCEL ---
+const EXCEL_KEYS = {
+    AUM: 'AUM',
+    FEE: 'FEE',
+    CORRETORA: 'Corretora',
+    ASSINOU_CONTRATO: 'Assinou Contrato?',
+    SUBIU_CORRETORA: 'Subiu Cliente Corretora?',
+    CODIGO_CONTA: 'Código da conta'
+};
+
+// --- DADOS ENRIQUECIDOS PARA POPULAR O DASHBOARD ---
+const DUMMY_DATA = [
+    // Cliente de Alto AUM (Low Fee)
+    { [EXCEL_KEYS.AUM]: 12500000, [EXCEL_KEYS.FEE]: '0.5%', [EXCEL_KEYS.CORRETORA]: 'BTG Pactual', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C001' }, 
+    { [EXCEL_KEYS.AUM]: 7800000, [EXCEL_KEYS.FEE]: '0.65', [EXCEL_KEYS.CORRETORA]: 'XP Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C002' }, 
+    { [EXCEL_KEYS.AUM]: 4200000, [EXCEL_KEYS.FEE]: '0.55%', [EXCEL_KEYS.CORRETORA]: 'BTG Pactual', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C004' },
+    
+    // Oportunidades Críticas (Assinou, Custódia Pendente - ALERTA)
+    { [EXCEL_KEYS.AUM]: 1800000, [EXCEL_KEYS.FEE]: '0.9', [EXCEL_KEYS.CORRETORA]: 'Genial Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Não', [EXCEL_KEYS.CODIGO_CONTA]: 'C005' }, 
+    { [EXCEL_KEYS.AUM]: 550000, [EXCEL_KEYS.FEE]: '1.0', [EXCEL_KEYS.CORRETORA]: 'XP Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Não', [EXCEL_KEYS.CODIGO_CONTA]: 'C006' },
+    { [EXCEL_KEYS.AUM]: 500000, [EXCEL_KEYS.FEE]: '0.8%', [EXCEL_KEYS.CORRETORA]: 'Itaú BBA', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Não', [EXCEL_KEYS.CODIGO_CONTA]: 'C016' },
+    
+    // Clientes Médios (Crescimento)
+    { [EXCEL_KEYS.AUM]: 750000, [EXCEL_KEYS.FEE]: '0.95%', [EXCEL_KEYS.CORRETORA]: 'Genial Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C007' },
+    { [EXCEL_KEYS.AUM]: 350000, [EXCEL_KEYS.FEE]: '1.1', [EXCEL_KEYS.CORRETORA]: 'Rico', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C008' },
+    { [EXCEL_KEYS.AUM]: 1100000, [EXCEL_KEYS.FEE]: '0.75%', [EXCEL_KEYS.CORRETORA]: 'XP Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C011' },
+    
+    // Clientes Pequenos (High Fee - Oportunidade Up-Sell AUM)
+    { [EXCEL_KEYS.AUM]: 100000, [EXCEL_KEYS.FEE]: '1.2%', [EXCEL_KEYS.CORRETORA]: 'Rico', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C009' },
+    { [EXCEL_KEYS.AUM]: 35000, [EXCEL_KEYS.FEE]: '1.5%', [EXCEL_KEYS.CORRETORA]: 'XP Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C013' },
+    { [EXCEL_KEYS.AUM]: 20000, [EXCEL_KEYS.FEE]: '1.5%', [EXCEL_KEYS.CORRETORA]: 'Nuinvest', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Sim', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Sim', [EXCEL_KEYS.CODIGO_CONTA]: 'C014' },
+    
+    // Leads (Sem Assinatura - FOCO DE VENDAS)
+    { [EXCEL_KEYS.AUM]: 600000, [EXCEL_KEYS.FEE]: '1.0', [EXCEL_KEYS.CORRETORA]: 'XP Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Não', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Não', [EXCEL_KEYS.CODIGO_CONTA]: 'L001' },
+    { [EXCEL_KEYS.AUM]: 150000, [EXCEL_KEYS.FEE]: '1.2%', [EXCEL_KEYS.CORRETORA]: 'Genial Investimentos', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Não', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Não', [EXCEL_KEYS.CODIGO_CONTA]: 'L002' },
+    { [EXCEL_KEYS.AUM]: 900000, [EXCEL_KEYS.FEE]: '0.8%', [EXCEL_KEYS.CORRETORA]: 'BTG Pactual', [EXCEL_KEYS.ASSINOU_CONTRATO]: 'Não', [EXCEL_KEYS.SUBIU_CORRETORA]: 'Não', [EXCEL_KEYS.CODIGO_CONTA]: 'L004' }
+
+];
+
+
 const formatCurrency = (value) => {
     const num = parseFloat(value) || 0;
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
@@ -296,35 +411,44 @@ const formatCurrency = (value) => {
 
 const formatPercentage = (value) => {
     const num = parseFloat(value) || 0;
-    return (num * 100).toFixed(1) + '%';
+    return (num * 100).toFixed(2) + '%';
 };
 
-// --- FUNÇÃO CENTRAL DE CÁLCULO DE KPIS ---
+// --- FUNÇÃO CENTRAL DE CÁLCULO DE KPIS (CORREÇÃO DE NORMALIZAÇÃO DO FEE) ---
 function calculateKPIs(data) {
     if (data.length === 0) {
         return { AUMTotal: 0, ReceitaAnual: 0, FeeMedio: 0, TicketMedio: 0, ClientesCount: 0, AssinadosCount: 0, CustodiaCount: 0 };
     }
     
     let totalAUMCustodia = 0;
-    let totalFeeAnual = 0;
+    let totalFeeAnual = 0; 
     let clientesCount = 0;
     let assinadosCount = 0;
     let custodiaCount = 0;
     
     data.forEach(client => {
-        if (!client.CodigoConta) return; 
-
-        const aum = parseFloat(client.AUM) || 0;
-        const fee = parseFloat(client.Fee) || 0;
+        const aum = parseFloat(client[EXCEL_KEYS.AUM]) || 0;
         
-        totalAUMCustodia += aum;
-        totalFeeAnual += aum * fee; 
+        let feeValue = String(client[EXCEL_KEYS.FEE] || '0').replace('%', '').trim().replace(',', '.');
+        let fee = parseFloat(feeValue) || 0;
+        
+        // CORREÇÃO FINAL: Presume que qualquer valor >= 0.05 ou > 1 é uma porcentagem não convertida e divide por 100.
+        // Ex: 0.75 (75%) -> 0.0075. 1.2 (1.2%) -> 0.012
+        if (fee >= 0.05 || fee > 1) { 
+            fee = fee / 100;
+        }
+
+        if (aum > 0) {
+            totalAUMCustodia += aum;
+            totalFeeAnual += aum * fee; 
+        }
+        
         clientesCount++;
         
-        if (String(client.AssinouContrato).toLowerCase().includes('sim')) {
+        if (String(client[EXCEL_KEYS.ASSINOU_CONTRATO]).toLowerCase().includes('sim')) {
             assinadosCount++;
         }
-        if (String(client.SubiuCorretora).toLowerCase().includes('sim')) {
+        if (String(client[EXCEL_KEYS.SUBIU_CORRETORA]).toLowerCase().includes('sim')) {
              custodiaCount++;
         }
     });
@@ -333,19 +457,97 @@ function calculateKPIs(data) {
     const ticketMedio = clientesCount > 0 ? (totalAUMCustodia / clientesCount) : 0;
     
     return {
-        AUMTotal: totalAUMCustodia, ReceitaAnual: totalFeeAnual, FeeMedio: feeMedioPonderado,
-        TicketMedio: ticketMedio, ClientesCount: clientesCount, AssinadosCount: assinadosCount,
+        AUMTotal: totalAUMCustodia, 
+        ReceitaAnual: totalFeeAnual, 
+        FeeMedio: feeMedioPonderado, 
+        TicketMedio: ticketMedio, 
+        ClientesCount: clientesCount, 
+        AssinadosCount: assinadosCount,
         CustodiaCount: custodiaCount
     };
+}
+
+// --- POPULAÇÃO DOS KPIS NA TELA ---
+function populateKPIs(kpis) {
+    document.getElementById('kpiAUMTotal').textContent = formatCurrency(kpis.AUMTotal);
+    document.getElementById('kpiReceitaAnual').textContent = formatCurrency(kpis.ReceitaAnual);
+    
+    document.getElementById('kpiTotalClientes').textContent = kpis.ClientesCount;
+    document.getElementById('kpiFeeMedio').textContent = formatPercentage(kpis.FeeMedio); 
+    
+    document.getElementById('kpiTicketMedio').textContent = formatCurrency(kpis.TicketMedio);
+    
+    // Atualizações das legendas
+    document.getElementById('kpiAUMChange').textContent = `Base total: ${kpis.ClientesCount} clientes.`;
+    document.getElementById('kpiReceitaChange').textContent = `Com Fee Médio de ${formatPercentage(kpis.FeeMedio)}`;
+    document.getElementById('kpiClientesChange').textContent = `Assinados: ${kpis.AssinadosCount}, Custódia: ${kpis.CustodiaCount}`;
+}
+
+// --- FUNÇÕES DE FILTRAGEM (MANTIDAS) ---
+function populateFilters(data) {
+    const corretoras = new Set();
+    data.forEach(client => {
+        const c = String(client[EXCEL_KEYS.CORRETORA] || '').trim();
+        if (c) corretoras.add(c);
+    });
+
+    const selectCorretora = document.getElementById('filterCorretora');
+    const selectedCorretora = selectCorretora.value; 
+
+    selectCorretora.innerHTML = '<option value="Todos">Corretora (Todas)</option>';
+
+    [...corretoras].sort().forEach(corretora => {
+        const option = document.createElement('option');
+        option.value = corretora;
+        option.textContent = corretora;
+        selectCorretora.appendChild(option);
+    });
+    selectCorretora.value = selectedCorretora || 'Todos'; 
+}
+
+function applyFilters() {
+    const corretoraFilter = document.getElementById('filterCorretora').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    let filteredData = [...clientsData];
+
+    // 1. Filtrar por Corretora
+    if (corretoraFilter !== 'Todos') {
+        filteredData = filteredData.filter(client => 
+            String(client[EXCEL_KEYS.CORRETORA] || '').trim() === corretoraFilter
+        );
+    }
+
+    // 2. Filtrar por Status de Conversão (Funil)
+    if (statusFilter !== 'Todos') {
+        filteredData = filteredData.filter(client => {
+            const assinou = String(client[EXCEL_KEYS.ASSINOU_CONTRATO]).toLowerCase().includes('sim');
+            const subiuCustodia = String(client[EXCEL_KEYS.SUBIU_CORRETORA]).toLowerCase().includes('sim');
+
+            if (statusFilter === 'CustodiaPendentes') {
+                return assinou && !subiuCustodia; 
+            } else if (statusFilter === 'SemAssinatura') {
+                return !assinou; 
+            }
+            return true;
+        });
+    }
+    
+    document.getElementById('filteredCount').textContent = `${filteredData.length} Clientes Filtrados`;
+    
+    const kpis = calculateKPIs(filteredData);
+    populateKPIs(kpis);
+    renderAUMCorretoraChart(filteredData); 
+    renderFeeAumChart(filteredData); 
+    renderConversionFunnelChart(kpis); 
 }
 
 // --- GRÁFICO 1: AUM POR CORRETORA (RISCO DE CONCENTRAÇÃO) ---
 function renderAUMCorretoraChart(data) {
     const corretoraData = {};
     data.forEach(client => {
-        const aum = parseFloat(client.AUM) || 0;
+        const aum = parseFloat(client[EXCEL_KEYS.AUM]) || 0;
         if (aum === 0) return;
-        const corretora = String(client.Corretora || 'Não Informada').trim();
+        const corretora = String(client[EXCEL_KEYS.CORRETORA] || 'Não Informada').trim();
         corretoraData[corretora] = (corretoraData[corretora] || 0) + aum;
     });
 
@@ -367,14 +569,24 @@ function renderAUMCorretoraChart(data) {
 
     if (chartInstances.aumCorretoraChart) chartInstances.aumCorretoraChart.destroy();
     
+    const newColors = [
+        '#1E40AF', // Azul Forte
+        '#047857', // Verde Escuro
+        '#FBBF24', // Amarelo
+        '#7C3AED', // Roxo
+        '#DC2626', // Vermelho
+        '#F97316', // Laranja
+        '#57534F', // Marrom
+    ];
+
     chartInstances.aumCorretoraChart = new Chart(canvas, {
         type: 'pie',
         data: {
             labels: labels,
             datasets: [{
                 data: values,
-                backgroundColor: labels.map((_, i) => `hsl(${(i * 360 / labels.length)}, 70%, 50%)`),
-                hoverOffset: 4
+                backgroundColor: newColors.slice(0, labels.length),
+                hoverOffset: 8
             }]
         },
         options: {
@@ -399,7 +611,7 @@ function renderAUMCorretoraChart(data) {
 }
 
 
-// --- GRÁFICO 2: FEE MÉDIO POR FAIXA DE AUM (OPORTUNIDADE) ---
+// --- GRÁFICO 2: FEE MÉDIO POR FAIXA DE AUM (OPORTUNIDADE - CORES AGORA EM JS) ---
 function renderFeeAumChart(data) {
     const FAIIXAS = {
         '0 - 50K': { min: 0, max: 50000, AUMTotal: 0, FeeTotal: 0 },
@@ -411,15 +623,23 @@ function renderFeeAumChart(data) {
     let totalValid = 0;
 
     data.forEach(client => {
-        const aum = parseFloat(client.AUM) || 0;
-        const fee = parseFloat(client.Fee) || 0;
+        const aum = parseFloat(client[EXCEL_KEYS.AUM]) || 0;
+        
+        let feeValue = String(client[EXCEL_KEYS.FEE] || '0').replace('%', '').trim().replace(',', '.');
+        let fee = parseFloat(feeValue) || 0;
+        
+        if (fee >= 0.05 || fee > 1) { 
+             fee = fee / 100;
+        }
+
         if (aum === 0 || fee === 0) return;
         totalValid++;
+        const feeAnual = aum * fee;
 
         for (const faixa in FAIIXAS) {
             if (aum >= FAIIXAS[faixa].min && aum <= FAIIXAS[faixa].max) {
                 FAIIXAS[faixa].AUMTotal += aum;
-                FAIIXAS[faixa].FeeTotal += aum * fee;
+                FAIIXAS[faixa].FeeTotal += feeAnual;
                 break;
             }
         }
@@ -452,14 +672,23 @@ function renderFeeAumChart(data) {
             labels: labels,
             datasets: [{
                 label: 'Fee Médio Ponderado',
-                data: feeMedios.map(f => f * 100), // Exibir em porcentagem (0.5% -> 0.5)
+                data: feeMedios.map(f => f * 100), // Exibir em porcentagem
                 backgroundColor: (context) => {
-                    // Destaca a faixa com menor Fee Médio (maior oportunidade de upsell)
-                    const data = context.chart.data.datasets[0].data;
-                    const minFee = Math.min(...data.filter(val => val > 0)); 
-                    return context.parsed.y > 0 && context.parsed.y === minFee 
-                        ? 'var(--cor-oportunidade)' 
-                        : 'var(--cor-principal-a)';
+                    const data = context.chart.data.datasets[0].data.filter(val => val > 0);
+                    if (data.length === 0) return AZUL_ESCURO;
+                    
+                    const maxFee = Math.max(...data); 
+                    const minFee = Math.min(...data);
+                    const currentFee = context.parsed.y;
+                    
+                    // USANDO AS VARIÁVEIS JS AGORA
+                    if (currentFee > 0 && currentFee === maxFee) {
+                        return COR_OPORTUNIDADE_MAIOR; // Verde
+                    } else if (currentFee > 0 && currentFee === minFee) {
+                        return COR_OPORTUNIDADE_MENOR; // Vermelho
+                    } else {
+                        return AZUL_ESCURO; // Padrão Azul
+                    }
                 }
             }]
         },
@@ -479,85 +708,85 @@ function renderFeeAumChart(data) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Fee Médio (%)'
-                    },
-                    ticks: {
-                       callback: (value) => value + '%'
-                    }
+                    title: { display: true, text: 'Fee Médio (%)' },
+                    ticks: { callback: (value) => value + '%' }
                 }
             }
         }
     });
 }
 
-// --- GRÁFICO 3: TAXAS DE CONVERSÃO IMEDIATA (%) ---
-function renderConversionRatesChart(kpis) {
+// --- GRÁFICO 3: FUNIL DE CONVERSÃO (CORES AGORA EM JS) ---
+function renderConversionFunnelChart(kpis) {
     const { ClientesCount, AssinadosCount, CustodiaCount } = kpis;
     
-    const taxaAssinatura = ClientesCount > 0 ? (AssinadosCount / ClientesCount) : 0;
-    const taxaCustodia = AssinadosCount > 0 ? (CustodiaCount / AssinadosCount) : 0; // Custódia vs Assinados
-    
-    const canvas = document.getElementById('conversionRatesChart');
-    const noDataMessage = document.getElementById('ratesNoDataMessage');
+    const canvas = document.getElementById('conversionFunnelChart');
+    const noDataMessage = document.getElementById('funnelNoDataMessage');
 
-    if (ClientesCount === 0 || AssinadosCount === 0) {
+    if (ClientesCount === 0) {
         canvas.style.display = 'none';
         noDataMessage.style.display = 'flex';
-        if (chartInstances.conversionRatesChart) chartInstances.conversionRatesChart.destroy();
+        if (chartInstances.conversionFunnelChart) chartInstances.conversionFunnelChart.destroy();
         return;
     }
     
     canvas.style.display = 'block';
     noDataMessage.style.display = 'none';
     
+    const leads = ClientesCount - AssinadosCount;
+    const pendentes = AssinadosCount - CustodiaCount;
+    const custodia = CustodiaCount;
+
     const labels = [
-        `Taxa de Assinatura (Contrato / Total)`,
-        `Taxa de Custódia (Custódia / Assinados)`
+        `3. Custódia (${custodia})`,
+        `2. Assinados Pendentes (${pendentes})`,
+        `1. Leads (Não Assinaram: ${leads})`
     ];
     
-    const values = [taxaAssinatura * 100, taxaCustodia * 100];
+    const values = [
+        custodia,
+        pendentes, 
+        leads 
+    ];
     
-    if (chartInstances.conversionRatesChart) chartInstances.conversionRatesChart.destroy(); 
+    // USANDO AS VARIÁVEIS JS AGORA
+    const backgroundColors = [
+        COR_FUNIL_CUSTODIA, 
+        COR_FUNIL_ASSINOU, 
+        COR_FUNIL_LEADS 
+    ];
 
-    chartInstances.conversionRatesChart = new Chart(canvas, {
-        type: 'bar',
+    if (chartInstances.conversionFunnelChart) chartInstances.conversionFunnelChart.destroy(); 
+
+    chartInstances.conversionFunnelChart = new Chart(canvas, {
+        type: 'doughnut',
         data: {
-            labels: labels,
+            // Invertendo a ordem para que o "Sucesso" (Custódia) comece no topo visualmente
+            labels: labels.reverse(), 
             datasets: [{
-                label: 'Taxa de Conversão',
-                data: values,
-                backgroundColor: [
-                    'var(--cor-principal-b)', 
-                    'var(--cor-conversao)'
-                ],
+                data: values.reverse(),
+                backgroundColor: backgroundColors.reverse(),
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '50%', 
             plugins: {
-                legend: { display: false },
+                legend: { position: 'bottom' },
+                title: {
+                    display: true,
+                    text: `Total de Clientes: ${ClientesCount}`,
+                    font: { size: 16 }
+                },
                 tooltip: {
                     callbacks: {
                         label: (context) => {
-                             return `${context.parsed.y.toFixed(1)}%`;
+                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                             const percentage = (context.parsed / total * 100).toFixed(1);
+                             return `${context.label}: ${percentage}%`;
                         }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                        display: true,
-                        text: 'Taxa de Conversão (%)'
-                    },
-                    ticks: {
-                        callback: (value) => value + '%'
                     }
                 }
             }
@@ -575,32 +804,16 @@ function loadDataAndPopulateDashboard() {
             clientsData = JSON.parse(data);
         } catch (e) {
             console.error("Erro ao ler dados do localStorage para o Dashboard:", e);
-            clientsData = [];
+            clientsData = DUMMY_DATA;
         }
     } else {
-        clientsData = [];
+        clientsData = DUMMY_DATA;
+        localStorage.setItem('vindeClientsData', JSON.stringify(DUMMY_DATA));
     }
+    
+    populateFilters(clientsData);
+    applyFilters(); 
 
-    const kpis = calculateKPIs(clientsData);
-    
-    // --- POPULAÇÃO DOS KPIS REAIS ---
-    document.getElementById('kpiAUMTotal').textContent = formatCurrency(kpis.AUMTotal);
-    // Alterado para "Receita Anual Projetada"
-    document.getElementById('kpiReceitaMensal').textContent = formatCurrency(kpis.ReceitaAnual);
-    document.getElementById('kpiTotalClientes').textContent = kpis.ClientesCount;
-    document.getElementById('kpiFeeMedio').textContent = formatPercentage(kpis.FeeMedio);
-    document.getElementById('kpiTicketMedio').textContent = formatCurrency(kpis.TicketMedio);
-    
-    // Atualizações das legendas
-    document.getElementById('kpiAUMChange').textContent = `Base total: ${kpis.ClientesCount} clientes.`;
-    document.getElementById('kpiReceitaChange').textContent = `Com Fee Médio de ${formatPercentage(kpis.FeeMedio)}`;
-    
-    // --- RENDERIZA OS NOVOS GRÁFICOS ESTRATÉGICOS ---
-    renderAUMCorretoraChart(clientsData);
-    renderFeeAumChart(clientsData); 
-    renderConversionRatesChart(kpis);
-
-    // Esconde o loader após carregar e calcular
     document.getElementById('loader').style.display = 'none';
     const main = document.getElementById('mainContainer');
     main.style.opacity = '1';
@@ -610,11 +823,10 @@ function loadDataAndPopulateDashboard() {
 
 // Loader e Inicialização
 window.addEventListener('load', () => {
-  // Garantir o mesmo tempo de espera do loader do outro arquivo
-  setTimeout(loadDataAndPopulateDashboard, 1500); 
+  setTimeout(loadDataAndPopulateDashboard, 1000); 
 });
 
-// Toggle sidebar (CORRIGIDO PARA TRANSITION)
+// Toggle sidebar 
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const main = document.getElementById('mainContainer');
@@ -624,7 +836,6 @@ function toggleSidebar() {
   const toggleBtn = document.querySelector('.btn-toggle');
   const isClosed = sidebar.classList.contains('closed');
   
-  // Lógica de rotação suave
   toggleBtn.style.transform = isClosed ? "rotate(0deg)" : "rotate(90deg)"; 
 }
 </script>
